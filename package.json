@@ -1,0 +1,15 @@
+{
+  "name": "trabalho-semestral-lp2",
+  "private": true,
+  "workspaces": [
+    "front",
+    "back/catalogo-cestas",
+    "back/pedidos"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace front\" \"npm run dev --workspace back/catalogo-cestas\" \"npm run dev --workspace back/pedidos\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
