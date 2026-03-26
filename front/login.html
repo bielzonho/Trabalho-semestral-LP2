@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Grãos & Cestas</title>
+  <style>
+    /* Reset básico para evitar repetições visuais */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f6f3;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* MENU */
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      flex-shrink: 0; /* Impede o header de encolher */
+    }
+
+    header h1 { margin: 0; font-size: 22px; }
+
+    nav a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+    }
+
+    /* AREA CENTRAL */
+    .login-container {
+      flex: 1; /* Ocupa todo o espaço restante da tela */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    .login-card h2 { margin-bottom: 25px; color: #333; }
+
+    .form-group { margin-bottom: 15px; text-align: left; }
+
+    .form-group label { display: block; margin-bottom: 5px; color: #666; }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .btn-entrar {
+      width: 100%;
+      padding: 12px;
+      background-color: #c59d5f;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Grãos & Cestas</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="login.html" style="color: #c59d5f;">Login</a>
+    </nav>
+  </header>
+
+  <div class="login-container">
+    <div class="login-card">
+      <h2>Acessar Conta</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" required placeholder="exemplo@email.com">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" required placeholder="******">
+        </div>
+        <button type="submit" class="btn-entrar">ENTRAR</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').onsubmit = (e) => {
+      e.preventDefault();
+      window.location.href = 'index.html';
+    };
+  </script>
+
+</body>
+</html>
