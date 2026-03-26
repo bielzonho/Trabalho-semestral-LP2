@@ -110,22 +110,19 @@
 </head>
 <body>
 
-  <!-- MENU -->
   <header>
     <h1>Grãos & Cestas</h1>
     <nav>
-      <a href="#">Home</a>
-      <a href="#">Catálogo</a>
+      <a href="index.html">Home</a>
+      <a href="login.html">Login</a> <a href="#">Catálogo</a>
       <a href="#">Contato</a>
     </nav>
   </header>
 
-  <!-- BANNER -->
   <div class="banner">
     Café da manhã especial 🧺
   </div>
 
-  <!-- CONTEÚDO -->
   <div class="container">
     <h2>Catálogo de Cestas</h2>
 
@@ -146,6 +143,7 @@
         const div = document.createElement("div");
         div.className = "cesta";
 
+        // Lógica de imagem baseada nos dados do backend
         div.innerHTML = `
           <div class="imagem">
             <img src="${cesta.nome === 'Cesta Premium' ? 'cesta_premium.jpg' : 'cesta.jpg'}">
