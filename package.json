@@ -7,9 +7,11 @@
     "back/pedidos"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace front\" \"npm run dev --workspace back/catalogo-cestas\" \"npm run dev --workspace back/pedidos\""
+    "dev": "concurrently \"npm run dev --workspace front\" \"npm run dev --workspace back/catalogo-cestas\" \"npm run dev --workspace back/pedidos\"",
+    "generate-config": "node scripts/generate-supabase-config.js"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "dotenv": "^16.0.0"
   }
 }

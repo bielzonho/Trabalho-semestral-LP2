@@ -1,166 +1,599 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Catálogo de Cestas</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grãos & Cestas</title>
 
   <style>
-    body {
+    :root {
+      --bg: #f8f6f3;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --gold: #c59d5f;
+      --border: #e7e1d8;
+      --shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
-      background-color: #f8f6f3;
+      background: var(--bg);
+      color: var(--text);
     }
 
-    /* MENU */
     header {
-      background-color: #fff;
-      padding: 15px 40px;
+      background: #fff;
+      border-bottom: 1px solid #e7e1d8;
+      padding: 16px 40px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #ddd;
+      justify-content: space-between;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    header h1 {
-      margin: 0;
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand strong {
       font-size: 22px;
+      color: #111;
+    }
+
+    .brand span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
     }
 
     nav a {
-      margin-left: 20px;
       text-decoration: none;
       color: #333;
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     nav a:hover {
-      color: #c59d5f;
+      color: var(--gold);
     }
 
-    /* BANNER */
     .banner {
-      height: 300px;
-      background: url("banner.jpg") center/cover no-repeat;
+      min-height: 280px;
+      background:
+        linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0.18)),
+        url("banner.jpg") center/cover no-repeat;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: black;
-      font-size: 32px;
-      font-weight: bold;
+      text-align: center;
+      padding: 24px;
     }
 
-    /* CONTEÚDO */
+    .banner h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #111;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+    }
+
+    .banner p {
+      margin: 12px 0 0;
+      color: #333;
+      font-size: 18px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.65);
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+    }
+
     .container {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 0 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
     }
 
-    h2 {
-      margin-bottom: 20px;
+    .section-title {
+      margin: 0 0 18px;
+      font-size: 28px;
     }
 
-    /* CARD */
-    .cesta {
-      background: white;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 20px;
+    .section-subtitle {
+      margin: 0 0 28px;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.5;
+    }
+
+    .toolbar {
       display: flex;
-      gap: 15px;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: #fff;
+      color: #333;
+      border: 1px solid var(--border);
+    }
+
+    .grid-cestas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 18px;
+    }
+
+    .cesta {
+      background: var(--card);
+      border: 1px solid #eee;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .imagem {
-      width: 120px;
-      height: 120px;
-      background-color: #eee;
-      border-radius: 8px;
+      width: 100%;
+      height: 220px;
+      background: #ece7df;
       overflow: hidden;
-      flex-shrink: 0;
     }
 
     .imagem img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
 
     .info {
-      flex: 1;
+      padding: 18px;
     }
 
     .nome {
-      font-size: 18px;
-      font-weight: bold;
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 700;
     }
 
     .descricao {
-      color: #666;
-      margin: 5px 0;
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      min-height: 48px;
     }
 
     .preco {
-      color: #c59d5f;
-      font-weight: bold;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 18px;
     }
 
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 50px 0;
+    }
+
+    .pedidos-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .card h3 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #444;
+      font-weight: 700;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #dcd5cb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      outline: none;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .pedido-item {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+
+    .pedido-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .pedido-meta {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #fff3dc;
+      color: #8a6200;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 900px) {
+      .pedidos-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 14px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .banner h1 {
+        font-size: 30px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>Grãos & Cestas</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="login.html">Login</a> <a href="#">Catálogo</a>
-      <a href="#">Contato</a>
+    <div class="brand">
+      <strong>Grãos & Cestas</strong>
+      <span>Café da manhã especial para presentear</span>
+    </div>
+
+    <nav id="navUsuario">
+      <a href="#catalogo">Catálogo</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="login.html">Login</a>
     </nav>
   </header>
 
-  <div class="banner">
-    Café da manhã especial 🧺
-  </div>
+  <section class="banner">
+    <div>
+      <h1>Café da manhã especial 🧺</h1>
+      <p>Seleção de cestas para ocasiões especiais</p>
+    </div>
+  </section>
 
-  <div class="container">
-    <h2>Catálogo de Cestas</h2>
+  <main class="container">
+    <section id="catalogo">
+      <h2 class="section-title">Catálogo de Cestas</h2>
+      <p class="section-subtitle">
+        Veja as cestas disponíveis, com imagens, descrições e preços.
+      </p>
 
-    <div id="lista"></div>
-  </div>
+      <div id="listaCestas" class="grid-cestas"></div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section id="pedidos">
+      <h2 class="section-title">Pedidos</h2>
+      <p class="section-subtitle">
+        Registre um pedido e acompanhe os pedidos já criados.
+      </p>
+
+      <div class="pedidos-wrap">
+        <div class="card">
+          <h3>Novo pedido</h3>
+
+          <form id="pedidoForm">
+            <div class="form-group">
+              <label for="nomeCliente">Nome do cliente</label>
+              <input type="text" id="nomeCliente" placeholder="Ex.: Maria Silva" required />
+            </div>
+
+            <div class="form-group">
+              <label for="telefone">Telefone</label>
+              <input type="text" id="telefone" placeholder="Ex.: (11) 99999-9999" required />
+            </div>
+
+            <div class="form-group">
+              <label for="enderecoEntrega">Endereço de entrega</label>
+              <input type="text" id="enderecoEntrega" placeholder="Rua, número, bairro" required />
+            </div>
+
+            <div class="form-group">
+              <label for="cestaId">Cesta</label>
+              <select id="cestaId" required></select>
+            </div>
+
+            <div class="form-group">
+              <label for="quantidade">Quantidade</label>
+              <input type="number" id="quantidade" min="1" value="1" required />
+            </div>
+
+            <div class="form-group">
+              <label for="observacao">Observação</label>
+              <textarea id="observacao" placeholder="Ex.: Entregar pela manhã, incluir cartão..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Enviar pedido</button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+  </main>
 
   <script>
-    const API = "http://localhost:3000/cestas";
+    const API_CESTAS = "http://localhost:3000/cestas";
+    const API_PEDIDOS = "http://localhost:3001/pedidos";
 
-    async function listarCestas() {
-      const resposta = await fetch(API);
-      const dados = await resposta.json();
+    let cestasCache = [];
 
-      const lista = document.getElementById("lista");
-      lista.innerHTML = "";
-
-      dados.forEach(cesta => {
-        const div = document.createElement("div");
-        div.className = "cesta";
-
-        // Lógica de imagem baseada nos dados do backend
-        div.innerHTML = `
-          <div class="imagem">
-            <img src="${cesta.nome === 'Cesta Premium' ? 'cesta_premium.jpg' : 'cesta.jpg'}">
-          </div>
-          <div class="info">
-            <div class="nome">${cesta.nome}</div>
-            <div class="descricao">${cesta.descricao}</div>
-            <div class="preco">R$ ${cesta.preco}</div>
-          </div>
-        `;
-
-        lista.appendChild(div);
-      });
+    function formatarPreco(valor) {
+      const numero = Number(valor);
+      if (Number.isNaN(numero)) return "0,00";
+      return numero.toFixed(2).replace(".", ",");
     }
 
-    listarCestas();
-  </script>
+    async function carregarCestas() {
+      try {
+        const resposta = await fetch(API_CESTAS);
+        const dados = await resposta.json();
 
+        cestasCache = Array.isArray(dados) ? dados : [];
+
+        const lista = document.getElementById("listaCestas");
+        const select = document.getElementById("cestaId");
+
+        lista.innerHTML = "";
+        select.innerHTML = "";
+
+        if (cestasCache.length === 0) {
+          lista.innerHTML = '<p class="empty">Nenhuma cesta encontrada.</p>';
+          select.innerHTML = '<option value="">Nenhuma cesta disponível</option>';
+          return;
+        }
+
+        cestasCache.forEach(cesta => {
+          // forçar uso das imagens locais de produto, em vez de URL externa
+          const imagem = String(cesta.nome).toLowerCase().includes("premium")
+            ? "cesta_premium.jpg"
+            : "cesta.jpg";
+
+          const card = document.createElement("article");
+          card.className = "cesta";
+
+          card.innerHTML = `
+            <div class="imagem">
+              <img src="${imagem}" alt="${cesta.nome}">
+            </div>
+            <div class="info">
+              <h3 class="nome">${cesta.nome}</h3>
+              <p class="descricao">${cesta.descricao || "Sem descrição."}</p>
+              <div class="preco">R$ ${formatarPreco(cesta.preco)}</div>
+            </div>
+          `;
+
+          lista.appendChild(card);
+
+          const option = document.createElement("option");
+          option.value = cesta.id;
+          option.textContent = `${cesta.nome} — R$ ${formatarPreco(cesta.preco)}`;
+          select.appendChild(option);
+        });
+
+        if (!select.value && select.options.length > 0) {
+          select.selectedIndex = 0;
+        }
+      } catch (erro) {
+        console.error("Erro ao carregar cestas:", erro);
+        document.getElementById("listaCestas").innerHTML =
+          '<p class="empty">Erro ao carregar o catálogo.</p>';
+      }
+    }
+
+    async function carregarPedidos() {
+      const lista = document.getElementById("listaPedidos");
+
+      try {
+        const resposta = await fetch(API_PEDIDOS);
+
+        if (!resposta.ok) {
+          throw new Error(`HTTP ${resposta.status}`);
+        }
+
+        const dados = await resposta.json();
+        const pedidos = Array.isArray(dados) ? dados : [];
+
+        lista.innerHTML = "";
+
+        if (pedidos.length === 0) {
+          lista.innerHTML = '<p class="empty">Nenhum pedido cadastrado.</p>';
+          return;
+        }
+
+        pedidos.forEach(pedido => {
+          const cestaRelacionada = cestasCache.find(c => c.id === pedido.cestaId);
+          const nomeCesta = pedido.cestaNome || cestaRelacionada?.nome || "Cesta não identificada";
+          const total =
+            pedido.total !== undefined
+              ? `R$ ${formatarPreco(pedido.total)}`
+              : (cestaRelacionada?.preco !== undefined && pedido.quantidade
+                  ? `R$ ${formatarPreco(Number(cestaRelacionada.preco) * Number(pedido.quantidade))}`
+                  : "—");
+
+          const div = document.createElement("div");
+          div.className = "pedido-item";
+
+          div.innerHTML = `
+            <strong>${pedido.nomeCliente || "Cliente não informado"}</strong>
+            <div class="pedido-meta">
+              <div><b>Telefone:</b> ${pedido.telefone || "—"}</div>
+              <div><b>Cesta:</b> ${nomeCesta}</div>
+              <div><b>Quantidade:</b> ${pedido.quantidade || 1}</div>
+              <div><b>Total:</b> ${total}</div>
+              <div><b>Observação:</b> ${pedido.observacao || "—"}</div>
+            </div>
+            <span class="status">${pedido.status || "Pendente"}</span>
+          `;
+
+          lista.appendChild(div);
+        });
+      } catch (erro) {
+        console.error("Erro ao carregar pedidos:", erro);
+        lista.innerHTML =
+          '<p class="empty">O microserviço de pedidos não respondeu ou a rota está diferente.</p>';
+      }
+    }
+
+    async function criarPedido(event) {
+      event.preventDefault();
+
+      const cestaId = document.getElementById("cestaId").value;
+      const cestaSelecionada = cestasCache.find(c => c.id === cestaId);
+      const quantidade = Number(document.getElementById("quantidade").value);
+      const valorTotal = Number((Number(cestaSelecionada?.preco || 0) * quantidade).toFixed(2));
+
+      const payload = {
+        clienteNome: document.getElementById("nomeCliente").value.trim(),
+        clienteTelefone: document.getElementById("telefone").value.trim(),
+        enderecoEntrega: document.getElementById("enderecoEntrega").value.trim(),
+        cestaId,
+        quantidade,
+        valorTotal
+      };
+
+      try {
+        const resposta = await fetch(API_PEDIDOS, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resposta.ok) {
+          const texto = await resposta.text();
+          throw new Error(texto || `HTTP ${resposta.status}`);
+        }
+
+        document.getElementById("pedidoForm").reset();
+        document.getElementById("quantidade").value = 1;
+
+        alert("Pedido enviado com sucesso.");
+      } catch (erro) {
+        console.error("Erro ao criar pedido:", erro);
+        alert(`Não foi possível criar o pedido: ${erro.message || erro}`);
+      }
+    }
+
+    document.getElementById("pedidoForm").addEventListener("submit", criarPedido);
+
+    function exibirUsuario() {
+      const nav = document.getElementById('navUsuario');
+      const nomeUsuario = localStorage.getItem('nomeUsuario');
+
+      if (nomeUsuario) {
+        nav.innerHTML = `
+          <a href="#catalogo">Catálogo</a>
+          <a href="pedidos.html">Pedidos</a>
+          <span style="margin-left:16px;font-weight:700;color:#444;">${nomeUsuario}</span>
+          <button id="btnLogout" class="btn btn-ghost" style="margin-left:12px;">Sair</button>
+        `;
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+          localStorage.removeItem('nomeUsuario');
+          localStorage.removeItem('emailUsuario');
+          window.location.href = 'index.html';
+        });
+      } else {
+        nav.innerHTML = `
+          <a href="#catalogo">Catálogo</a>
+          <a href="pedidos.html">Pedidos</a>
+          <a href="login.html">Login</a>
+        `;
+      }
+    }
+
+    window.addEventListener("load", async () => {
+      await carregarCestas();
+      exibirUsuario();
+    });
+  </script>
 </body>
 </html>
