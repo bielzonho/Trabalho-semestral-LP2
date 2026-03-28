@@ -87,7 +87,7 @@
 
   <header>
     <h1>Grãos & Cestas</h1>
-    <nav>
+    <nav id="navUsuario">
       <a href="index.html">Home</a>
       <a href="login.html" style="color: #c59d5f;">Login</a>
     </nav>
@@ -98,23 +98,176 @@
       <h2>Acessar Conta</h2>
       <form id="loginForm">
         <div class="form-group">
+          <label>Nome de usuário</label>
+          <input type="text" name="nomeUsuario" required placeholder="" />
+        </div>
+        <div class="form-group">
           <label>E-mail</label>
-          <input type="email" required placeholder="exemplo@email.com">
+          <input type="email" name="email" required placeholder="exemplo@email.com">
         </div>
         <div class="form-group">
           <label>Senha</label>
-          <input type="password" required placeholder="******">
+          <input type="password" name="senha" required placeholder="******">
         </div>
         <button type="submit" class="btn-entrar">ENTRAR</button>
+        <button id="btnModo" class="btn-entrar" style="margin-top:8px; background: #eee; color:#333;">Já possui conta? Entrar</button>
       </form>
     </div>
   </div>
 
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
   <script>
-    document.getElementById('loginForm').onsubmit = (e) => {
+    // ✅ forma correta no modo global
+    const supabaseClient = window.supabase.createClient(
+      window.SUPABASE_URL,
+      window.SUPABASE_KEY
+    );
+
+    let modoCadastro = false;
+
+    function atualizarModo() {
+      const titulo = document.querySelector('.login-card h2');
+      const btnAlternar = document.getElementById('btnModo');
+      const nomeField = document.querySelector('input[name="nomeUsuario"]');
+
+      if (modoCadastro) {
+        titulo.textContent = 'Criar conta';
+        btnAlternar.textContent = 'Já possui conta? Entrar';
+        nomeField.parentElement.style.display = 'block';
+        nomeField.required = true;
+      } else {
+        titulo.textContent = 'Acessar Conta';
+        btnAlternar.textContent = 'Ainda não tem conta? Cadastre-se';
+        nomeField.parentElement.style.display = 'none';
+        nomeField.required = false;
+      }
+    }
+
+    async function hashSenha(senha) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(senha);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    async function salvarUsuarioSupabase(nomeUsuario, email, senha) {
+      const senhaHash = await hashSenha(senha);
+
+      const { data, error } = await supabaseClient
+        .from('users')
+        .insert([{ name: nomeUsuario, email, password: senhaHash }]);
+
+      return { data, error };
+    }
+
+    async function logarUsuarioSupabase(email, senha) {
+      const senhaHash = await hashSenha(senha);
+
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error || !data) {
+        throw new Error('Conta não encontrada.');
+      }
+
+      if (data.password !== senhaHash) {
+        throw new Error('E-mail ou senha inválidos.');
+      }
+
+      return data;
+    }
+
+    function exibirUsuario() {
+      const nav = document.getElementById('navUsuario');
+      const nomeUsuario = localStorage.getItem('nomeUsuario');
+
+      if (nomeUsuario) {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <span style="margin-left:16px;font-weight:700;color:#444;">${nomeUsuario}</span>
+          <button id="btnLogout" class="btn-entrar" style="margin-left:12px;">Sair</button>
+        `;
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+          localStorage.removeItem('nomeUsuario');
+          localStorage.removeItem('emailUsuario');
+          window.location.href = 'index.html';
+        });
+      } else {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="login.html" style="color: #c59d5f;">Login</a>
+        `;
+      }
+    }
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
       e.preventDefault();
-      window.location.href = 'index.html';
+
+      const nomeUsuario = document.querySelector('input[name="nomeUsuario"]').value.trim();
+      const email = document.querySelector('input[name="email"]').value.trim();
+      const senha = document.querySelector('input[name="senha"]').value;
+
+      if (!email || !senha) {
+        alert('Informe e-mail e senha.');
+        return;
+      }
+
+      try {
+        if (modoCadastro) {
+          if (!nomeUsuario) {
+            alert('Informe o nome de usuário para cadastro.');
+            return;
+          }
+
+          const { error } = await salvarUsuarioSupabase(nomeUsuario, email, senha);
+
+          if (error) {
+            throw new Error(error.message || 'Erro ao cadastrar usuário.');
+          }
+
+          alert('Conta criada com sucesso. Agora faça login.');
+          modoCadastro = false;
+          atualizarModo();
+          return;
+        }
+
+        const usuario = await logarUsuarioSupabase(email, senha);
+
+        // ✅ corrigido aqui
+        localStorage.setItem('nomeUsuario', usuario.name);
+        localStorage.setItem('emailUsuario', usuario.email);
+
+        window.location.href = 'index.html';
+
+      } catch (err) {
+        console.log('--- login/cadastro trace ---');
+        console.log('modoCadastro:', modoCadastro);
+        console.log('nomeUsuario:', nomeUsuario);
+        console.log('email:', email);
+        console.log('senha:', senha ? '[hidden]' : '[vazio]');
+        console.error('Supabase/erro:', err);
+        alert(err.message || 'Erro no login.');
+      }
     };
+
+    document.getElementById('btnModo').addEventListener('click', (e) => {
+      e.preventDefault();
+      modoCadastro = !modoCadastro;
+      atualizarModo();
+    });
+
+    window.addEventListener('load', () => {
+      exibirUsuario();
+      atualizarModo();
+    });
   </script>
 
 </body>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedidos - Grãos & Cestas</title>
+  <style>
+    html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f8f6f3; color: #222; }
+    header { background: #fff; border-bottom: 1px solid #e7e1d8; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { margin: 0; font-size: 22px; }
+    nav a { margin-left: 16px; text-decoration: none; color: #333; font-weight: 700; }
+    nav a:hover { color: #c59d5f; }
+    .container { max-width: 1100px; margin: 30px auto; padding: 0 20px 40px; }
+    .section-title { margin: 0 0 16px; font-size: 28px; }
+    .section-subtitle { margin: 0 0 20px; color: #666; }
+    .btn { border: none; border-radius: 8px; padding: 10px 14px; cursor:pointer; font-weight:700; }
+    .btn-primary { background: #c59d5f; color: #fff; }
+    .pedido-item { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .pedido-item strong { display:block; margin-bottom: 8px; }
+    .pedido-meta { color: #666; font-size:14px; line-height:1.5; }
+    .status { display:inline-block; margin-top:10px; padding:4px 10px; border-radius: 999px; background: #fff3dc; color: #8a6200; font-size:12px; font-weight:700; }
+    .empty { color: #666; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Grãos & Cestas</h1>
+    <nav id="navUsuario">
+      <a href="index.html">Home</a>
+      <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">Pedidos realizados</h2>
+    <p class="section-subtitle">Veja aqui os pedidos que já foram cadastrados.</p>
+    <div style="margin-bottom: 16px;"><button class="btn btn-primary" id="btnAtualizar">Atualizar pedidos</button></div>
+
+    <div id="listaPedidos"></div>
+  </main>
+
+  <script>
+    const API_PEDIDOS = "http://localhost:3001/pedidos";
+
+    async function carregarPedidos() {
+      const lista = document.getElementById('listaPedidos');
+      try {
+        const resposta = await fetch(API_PEDIDOS);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const pedidos = await resposta.json();
+
+        if (!Array.isArray(pedidos) || pedidos.length === 0) {
+          lista.innerHTML = '<p class="empty">Nenhum pedido cadastrado.</p>';
+          return;
+        }
+
+        lista.innerHTML = '';
+
+        pedidos.forEach(pedido => {
+          const div = document.createElement('div');
+          div.className = 'pedido-item';
+          div.innerHTML = `
+            <strong>${pedido.clienteNome || 'Cliente não informado'}</strong>
+            <div class="pedido-meta">
+              <div><b>Telefone:</b> ${pedido.clienteTelefone || '—'}</div>
+              <div><b>Endereço:</b> ${pedido.enderecoEntrega || '—'}</div>
+              <div><b>Cesta ID:</b> ${pedido.cestaId || '—'}</div>
+              <div><b>Quantidade:</b> ${pedido.quantidade ?? '—'}</div>
+              <div><b>Total:</b> R$ ${pedido.valorTotal !== undefined ? Number(pedido.valorTotal).toFixed(2).replace('.', ',') : '—'}</div>
+              <div><b>Data:</b> ${pedido.dataPedido || '—'}</div>
+            </div>
+            <span class="status">${pedido.status || 'PENDENTE'}</span>
+          `;
+          lista.appendChild(div);
+        });
+      } catch (erro) {
+        lista.innerHTML = `<p class="empty">Erro ao carregar pedidos: ${erro.message || erro}</p>`;
+        console.error('Erro ao carregar pedidos:', erro);
+      }
+    }
+
+    function exibirUsuario() {
+      const nav = document.getElementById('navUsuario');
+      const nomeUsuario = localStorage.getItem('nomeUsuario');
+
+      if (nomeUsuario) {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
+          <span style="margin-left:16px;font-weight:700;color:#444;">${nomeUsuario}</span>
+          <button id="btnLogout" class="btn btn-ghost" style="margin-left:12px;">Sair</button>
+        `;
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+          localStorage.removeItem('nomeUsuario');
+          localStorage.removeItem('emailUsuario');
+          window.location.href = 'index.html';
+        });
+      } else {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
+          <a href="login.html">Login</a>
+        `;
+      }
+    }
+
+    document.getElementById('btnAtualizar').addEventListener('click', carregarPedidos);
+    window.addEventListener('load', () => {
+      carregarPedidos();
+      exibirUsuario();
+    });
+  </script>
+</body>
+</html>
