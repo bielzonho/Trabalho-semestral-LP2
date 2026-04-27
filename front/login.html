@@ -154,6 +154,26 @@
         .join('');
     }
 
+    async function verificarEmailExistente(email) {
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      return data !== null;
+    }
+
+    async function verificarNomeUsuarioExistente(nomeUsuario) {
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('name')
+        .eq('name', nomeUsuario)
+        .single();
+
+      return data !== null;
+    }
+
     async function salvarUsuarioSupabase(nomeUsuario, email, senha) {
       const senhaHash = await hashSenha(senha);
 
@@ -224,6 +244,20 @@
         if (modoCadastro) {
           if (!nomeUsuario) {
             alert('Informe o nome de usuário para cadastro.');
+            return;
+          }
+
+          // Validar se email já existe
+          const emailExistente = await verificarEmailExistente(email);
+          if (emailExistente) {
+            alert('Este e-mail já está registrado. Use outro e-mail ou faça login com sua conta existente.');
+            return;
+          }
+
+          // Validar se nome de usuário já existe
+          const nomeExistente = await verificarNomeUsuarioExistente(nomeUsuario);
+          if (nomeExistente) {
+            alert('Este nome de usuário já existe. Escolha outro nome de usuário.');
             return;
           }
 
