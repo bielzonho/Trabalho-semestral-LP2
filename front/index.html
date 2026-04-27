@@ -7,7 +7,7 @@
 
   <style>
     :root {
-      --bg: #f8f6f3;
+      --bg: #e6bb84;
       --card: #ffffff;
       --text: #222;
       --muted: #666;
@@ -293,6 +293,28 @@
       font-style: italic;
     }
 
+    /* Decoração de fundo: atrás do conteúdo mas na frente de nada crítico */
+    .decoration-bottom {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.3;
+    }
+
+    /* Garante que cards de cesta fiquem acima da decoração */
+    .cesta,
+    .card,
+    header,
+    .banner,
+    .container {
+      position: relative;
+      z-index: 1;
+    }
+
     @media (max-width: 900px) {
       .pedidos-wrap {
         grid-template-columns: 1fr;
@@ -317,6 +339,99 @@
   </style>
 </head>
 <body>
+
+  <!-- Decoração de fundo — Espigas de Trigo -->
+  <!--
+    Estratégia: a espiga é definida em coordenadas LOCAIS com origem (0,0)
+    em cima, crescendo para baixo (+y). A haste é a curva Bézier cúbica:
+      P0=(0,0)  P1=(18,120)  P2=(22,260)  P3=(10,348)
+    Os pontos exatos sobre a curva para cada t são calculados pela fórmula
+    B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+    e a tangente B'(t) dá a direção para as folhas ficarem perpendiculares ao caule.
+
+    t=0.18 → B=(4.4, 62.0)   B'=(-0.64, 0.77) → perp=(0.77, 0.64)
+    t=0.32 → B=(8.3, 108.6)  B'=(0.09, 0.99)  → perp=(0.99,-0.09)
+    t=0.46 → B=(13.0,155.0)  B'=(0.53, 0.85)  → perp=(0.85,-0.53)
+    t=0.60 → B=(17.0,200.0)  B'=(0.72, 0.70)  → perp=(0.70,-0.72)
+    t=0.74 → B=(17.5,246.0)  B'=(0.55, 0.83)  → perp=(0.83,-0.55)
+    t=0.88 → B=(13.5,296.0)  B'=(-0.12, 0.99) → perp=(0.99, 0.12)
+
+    Cada folha: comprimento 38px, nasce exatamente do ponto B(t),
+    vai para ±perp × 38. Tamanho original ~348px de altura.
+    Escala 0.60 (−40%) → 209px de altura.
+
+    Espiga direita = mesma definição espelhada em X (scale(-1,1)).
+    Posicionada à direita pelo translate.
+  -->
+  <svg class="decoration-bottom" viewBox="0 0 1400 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <!-- Espiga canônica: cresce de cima (y=0) para baixo (y=348) -->
+      <g id="espiga">
+        <!-- Haste -->
+        <path d="M 0 348 C 18 260, 22 120, 0 0"
+              stroke="#4a3000" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+
+        <!-- t=0.12 → B≈(2.8, 40.8): folhas curtas no topo -->
+        <line x1="5.2"  y1="40.8"  x2="26.5" y2="21.5"  stroke="#4a3000" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="6.2"  y1="40.8"  x2="-20.9" y2="21.5" stroke="#4a3000" stroke-width="1.3" stroke-linecap="round"/>
+
+        <!-- t=0.24 → B≈(6.8, 82.0) -->
+        <line x1="10.8"  y1="82.0"  x2="32.4" y2="59.6"  stroke="#4a3000" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="10.8"  y1="82.0"  x2="-18.8" y2="59.6" stroke="#4a3000" stroke-width="1.4" stroke-linecap="round"/>
+
+        <!-- t=0.36 → B≈(11.6, 124.5) -->
+        <line x1="13.6" y1="124.5" x2="38.0" y2="102.6" stroke="#4a3000" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="13.6" y1="124.5" x2="-14.8" y2="102.6" stroke="#4a3000" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- t=0.50 → B≈(15.0, 168.0) -->
+        <line x1="15.0" y1="168.0" x2="41.4" y2="143.4" stroke="#4a3000" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="15.0" y1="168.0" x2="-11.4" y2="143.4" stroke="#4a3000" stroke-width="1.6" stroke-linecap="round"/>
+
+        <!-- t=0.64 → B≈(16.4, 212.0) -->
+        <line x1="14.4" y1="212.0" x2="42.8" y2="186.5" stroke="#4a3000" stroke-width="1.7" stroke-linecap="round"/>
+        <line x1="14.4" y1="212.0" x2="-10.0" y2="186.5" stroke="#4a3000" stroke-width="1.7" stroke-linecap="round"/>
+
+        <!-- t=0.78 → B≈(14.2, 257.0) -->
+        <line x1="12.2" y1="257.0" x2="40.6" y2="231.8" stroke="#4a3000" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="12.2" y1="257.0" x2="-12.2" y2="231.8" stroke="#4a3000" stroke-width="1.8" stroke-linecap="round"/>
+
+        <!-- t=0.90 → B≈(8.5, 296.0) -->
+        <line x1="8.5"  y1="296.0" x2="34.2" y2="271.4" stroke="#4a3000" stroke-width="1.9" stroke-linecap="round"/>
+        <line x1="8.5"  y1="296.0" x2="-17.2" y2="271.4" stroke="#4a3000" stroke-width="1.9" stroke-linecap="round"/>
+
+        <!-- Grãos no topo (y=0 é o pico) -->
+        <ellipse cx="0"   cy="0"   rx="4.5" ry="7" fill="#4a3000"/>
+        <ellipse cx="-8"  cy="10"  rx="3.5" ry="6" fill="#4a3000"/>
+        <ellipse cx="8"   cy="10"  rx="3.5" ry="6" fill="#4a3000"/>
+        <ellipse cx="-14" cy="22"  rx="3"   ry="5" fill="#4a3000"/>
+        <ellipse cx="14"  cy="22"  rx="3"   ry="5" fill="#4a3000"/>
+        <ellipse cx="-5"  cy="26"  rx="3"   ry="5" fill="#4a3000"/>
+        <ellipse cx="5"   cy="26"  rx="3"   ry="5" fill="#4a3000"/>
+      </g>
+    </defs>
+
+    <!--
+      Espiga DIREITA: topo em (1340, 60), escala 0.60
+      translate(1340, 60) scale(0.60)  → base fica em y = 60 + 348×0.6 = 268+60 = 329
+      Para a haste chegar até o fundo da tela (y≈700) usamos escala 1.0 no Y
+      e ajustamos o translate para y = 700 - 348 = 352, mas queremos que
+      o topo fique no topo da tela, então translate(1340, 50) scale(0.60)
+    -->
+    <g transform="translate(1340, 491.2) scale(0.60)">
+      <use href="#espiga"/>
+    </g>
+
+    <!--
+      Espiga ESQUERDA: espelhada em X.
+      scale(-1,1) inverte X, então precisamos transladar para a posição correta.
+      translate(60, 50) scale(-0.60, 0.60) — o -0.60 espelha e escala.
+    -->
+    <g transform="translate(60, 491.2) scale(-0.60, 0.60)">
+      <use href="#espiga"/>
+    </g>
+
+  </svg>
+
   <header>
     <div class="brand">
       <strong>Grãos & Cestas</strong>
@@ -332,7 +447,7 @@
 
   <section class="banner">
     <div>
-      <h1>Café da manhã especial 🧺</h1>
+      <h1>Café da manhã especial</h1>
       <p>Seleção de cestas para ocasiões especiais</p>
     </div>
   </section>
@@ -430,7 +545,6 @@
         }
 
         cestasCache.forEach(cesta => {
-          // forçar uso das imagens locais de produto, em vez de URL externa
           const imagem = String(cesta.nome).toLowerCase().includes("premium")
             ? "cesta_premium.jpg"
             : "cesta.jpg";
