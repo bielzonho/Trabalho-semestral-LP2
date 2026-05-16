@@ -1,27 +1,91 @@
 import { v4 as uuidv4 } from "uuid";
-import { Pedido } from "../types/pedido";
+import { Pedido, PedidoItem } from "../types/pedido";
 
 export const pedidos: Pedido[] = [
   {
     id: uuidv4(),
-    clienteNome: "André",
-    clienteTelefone: "11999999999",
-    enderecoEntrega: "Rua das Flores, 123 - São Paulo",
+    clienteNome: "André Silva",
     cestaId: "cesta-classica-001",
-    quantidade: 1,
+    status: "pendente",
     valorTotal: 79.9,
-    status: "PENDENTE",
-    dataPedido: new Date().toISOString()
+    observacoes: "Entregar no período da manhã",
+    criadoEm: new Date().toISOString(),
+    itens: [
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-1",
+        produtoId: "produto-1",
+        quantidade: 1,
+        precoUnitario: 25.9,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-1",
+        produtoId: "produto-2",
+        quantidade: 6,
+        precoUnitario: 0.5,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-1",
+        produtoId: "produto-4",
+        quantidade: 1,
+        precoUnitario: 4.5,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-1",
+        produtoId: "produto-8",
+        quantidade: 2,
+        precoUnitario: 2.5,
+        criadoEm: new Date().toISOString()
+      }
+    ]
   },
   {
     id: uuidv4(),
-    clienteNome: "Mariana",
-    clienteTelefone: "11988888888",
-    enderecoEntrega: "Av. Central, 456 - São Paulo",
+    clienteNome: "Mariana Santos",
     cestaId: "cesta-premium-002",
-    quantidade: 2,
+    status: "confirmado",
     valorTotal: 259.8,
-    status: "CONFIRMADO",
-    dataPedido: new Date().toISOString()
+    observacoes: "Cliente VIP - prioridade",
+    criadoEm: new Date().toISOString(),
+    itens: [
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-2",
+        produtoId: "produto-1",
+        quantidade: 2,
+        precoUnitario: 25.9,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-2",
+        produtoId: "produto-3",
+        quantidade: 8,
+        precoUnitario: 3.5,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-2",
+        produtoId: "produto-7",
+        quantidade: 4,
+        precoUnitario: 6.5,
+        criadoEm: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        pedidoId: "pedido-2",
+        produtoId: "produto-5",
+        quantidade: 2,
+        precoUnitario: 15.9,
+        criadoEm: new Date().toISOString()
+      }
+    ]
   }
 ];

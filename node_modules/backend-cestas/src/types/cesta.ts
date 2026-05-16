@@ -1,14 +1,17 @@
-export interface ItemCesta {
-  nome: string;
+export interface CestaItem {
+  id: string;
+  cestaId: string;
+  produtoId: string;
   quantidade: number;
+  criadoEm: string;
 }
 
 export interface Cesta {
   id: string;
   nome: string;
   descricao: string;
-  preco: number;
-  imagem: string;
+  precoBase: number;
   ativa: boolean;
-  itens: ItemCesta[];
+  criadoEm: string;
+  itens?: CestaItem[];
 }

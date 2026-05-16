@@ -1,115 +1,769 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pedidos - Grãos & Cestas</title>
   <style>
-    html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f8f6f3; color: #222; }
-    header { background: #fff; border-bottom: 1px solid #e7e1d8; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { margin: 0; font-size: 22px; }
-    nav a { margin-left: 16px; text-decoration: none; color: #333; font-weight: 700; }
-    nav a:hover { color: #c59d5f; }
-    .container { max-width: 1100px; margin: 30px auto; padding: 0 20px 40px; }
-    .section-title { margin: 0 0 16px; font-size: 28px; }
-    .section-subtitle { margin: 0 0 20px; color: #666; }
-    .btn { border: none; border-radius: 8px; padding: 10px 14px; cursor:pointer; font-weight:700; }
-    .btn-primary { background: #c59d5f; color: #fff; }
-    .pedido-item { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-    .pedido-item strong { display:block; margin-bottom: 8px; }
-    .pedido-meta { color: #666; font-size:14px; line-height:1.5; }
-    .status { display:inline-block; margin-top:10px; padding:4px 10px; border-radius: 999px; background: #fff3dc; color: #8a6200; font-size:12px; font-weight:700; }
-    .empty { color: #666; font-style: italic; }
+    :root {
+      --bg: #e6bb84;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --gold: #c59d5f;
+      --border: #e7e1d8;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e7e1d8;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand strong {
+      font-size: 22px;
+      color: #111;
+    }
+
+    .brand small {
+      font-size: 12px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: var(--gold);
+    }
+
+    nav a.active {
+      color: var(--gold);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px 40px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .section-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #b08a50;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .search-box {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table th {
+      background: #f9f7f3;
+      padding: 16px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table tr:hover {
+      background: #f9f7f3;
+    }
+
+    .pedido-cliente {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .pedido-valor {
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 16px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-pendente {
+      background: #fff3dc;
+      color: #8a6200;
+    }
+
+    .status-confirmado {
+      background: #dcf0ff;
+      color: #0052a3;
+    }
+
+    .status-em_preparacao {
+      background: #ffe6d9;
+      color: #a35200;
+    }
+
+    .status-saiu_para_entrega {
+      background: #f0e6ff;
+      color: #6200a3;
+    }
+
+    .status-entregue {
+      background: #dcffde;
+      color: #009200;
+    }
+
+    .status-cancelado {
+      background: #ffdcdc;
+      color: #a30000;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background-color: var(--card);
+      margin: 5% auto;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      color: var(--muted);
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .items-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: #f9f7f3;
+      border-radius: 8px;
+    }
+
+    .items-section h4 {
+      margin-top: 0;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .item-row select,
+    .item-row input {
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .pedido-detalhes {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pedido-itens-list {
+      margin: 8px 0;
+      padding: 8px;
+      background: #f9f7f3;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .pedido-item-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>Grãos & Cestas</h1>
-    <nav id="navUsuario">
+    <div class="brand">
+      <strong>Grãos & Cestas</strong>
+      <small>Admin Panel</small>
+    </div>
+    <nav>
       <a href="index.html">Home</a>
-      <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
-      <a href="login.html">Login</a>
+      <a href="produtos.html">Produtos</a>
+      <a href="cestas.html">Cestas</a>
+      <a href="pedidos.html" class="active">Pedidos</a>
     </nav>
   </header>
 
   <main class="container">
-    <h2 class="section-title">Pedidos realizados</h2>
-    <p class="section-subtitle">Veja aqui os pedidos que já foram cadastrados.</p>
-    <div style="margin-bottom: 16px;"><button class="btn btn-primary" id="btnAtualizar">Atualizar pedidos</button></div>
+    <h2 class="section-title">Pedidos</h2>
+    <p class="section-subtitle">Gerencie os pedidos realizados pelos clientes.</p>
 
-    <div id="listaPedidos"></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="btnNovoPedido">+ Novo Pedido</button>
+      <button class="btn btn-secondary" id="btnAtualizar">Atualizar</button>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por cliente..." />
+      </div>
+    </div>
+
+    <table class="table" id="tabelaPedidos">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Status</th>
+          <th>Valor Total</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="listaPedidos"></tbody>
+    </table>
   </main>
 
+  <!-- Modal para Criar/Editar Pedido -->
+  <div id="modalPedido" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <div class="modal-header" id="modalTitle">Novo Pedido</div>
+
+      <form id="formPedido">
+        <div class="form-group">
+          <label for="pedidoClienteNome">Nome do Cliente *</label>
+          <input type="text" id="pedidoClienteNome" required />
+        </div>
+
+        <div class="form-group">
+          <label for="pedidoCestaId">Cesta (Opcional)</label>
+          <select id="pedidoCestaId">
+            <option value="">Selecionar cesta...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="pedidoObservacoes">Observações</label>
+          <textarea id="pedidoObservacoes"></textarea>
+        </div>
+
+        <div class="items-section">
+          <h4>Itens do Pedido</h4>
+          <div id="itemsContainer"></div>
+          <button type="button" class="btn btn-secondary btn-small" id="btnAdicionarItem">
+            + Adicionar Item
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Valor Total: <span id="valorTotalExibicao">R$ 0,00</span></label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelar">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
   <script>
-    const API_PEDIDOS = "http://localhost:3001/pedidos";
+    const modal = document.getElementById("modalPedido");
+    const modalClose = document.querySelector(".modal-close");
+    const btnNovoPedido = document.getElementById("btnNovoPedido");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const btnAtualizar = document.getElementById("btnAtualizar");
+    const formPedido = document.getElementById("formPedido");
+    const searchInput = document.getElementById("searchInput");
+    const btnAdicionarItem = document.getElementById("btnAdicionarItem");
+    const itemsContainer = document.getElementById("itemsContainer");
+    const valorTotalExibicao = document.getElementById("valorTotalExibicao");
 
-    async function carregarPedidos() {
-      const lista = document.getElementById('listaPedidos');
+    let pedidoAtual = null;
+    let todosPedidos = [];
+    let todosProdutos = [];
+    let todosCestas = [];
+    let itemCount = 0;
+
+    // Abrir modal para novo pedido
+    btnNovoPedido.addEventListener("click", async () => {
+      pedidoAtual = null;
+      itemCount = 0;
+      document.getElementById("modalTitle").textContent = "Novo Pedido";
+      formPedido.reset();
+      itemsContainer.innerHTML = "";
+      valorTotalExibicao.textContent = "R$ 0,00";
+
+      todosProdutos = await carregarProdutos();
+      todosCestas = await carregarCestas();
+
+      const selectCestas = document.getElementById("pedidoCestaId");
+      selectCestas.innerHTML =
+        '<option value="">Selecionar cesta...</option>' +
+        todosCestas
+          .map((c) => `<option value="${c.id}">${c.nome} - ${formatarMoeda(c.precoBase)}</option>`)
+          .join("");
+
+      modal.style.display = "block";
+    });
+
+    // Fechar modal
+    modalClose.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    btnCancelar.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (evento) => {
+      if (evento.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+
+    // Adicionar item ao pedido
+    btnAdicionarItem.addEventListener("click", () => {
+      itemCount++;
+      const selectProdutos = todosProdutos
+        .map((p) => `<option value="${p.id}">${p.nome}</option>`)
+        .join("");
+
+      const itemHtml = `
+        <div class="item-row" id="item-${itemCount}">
+          <select name="produto" required onchange="atualizarPreco(this)">${selectProdutos}</select>
+          <input type="number" name="quantidade" value="1" min="1" required onchange="atualizarValorTotal()" />
+          <input type="number" name="preco" value="0" min="0" step="0.01" required readonly style="background:#f0f0f0;" />
+          <input type="number" name="valor" value="0" min="0" step="0.01" required readonly style="background:#f0f0f0;" />
+          <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
+        </div>
+      `;
+      itemsContainer.innerHTML += itemHtml;
+    });
+
+    window.removerItem = (id) => {
+      document.getElementById(`item-${id}`).remove();
+      atualizarValorTotal();
+    };
+
+    window.atualizarPreco = (selectElement) => {
+      const row = selectElement.closest(".item-row");
+      const produtoId = selectElement.value;
+      const produto = todosProdutos.find((p) => p.id === produtoId);
+      const precoInput = row.querySelector('input[name="preco"]');
+
+      if (produto) {
+        precoInput.value = produto.preco.toFixed(2);
+        atualizarValorTotal();
+      }
+    };
+
+    window.atualizarValorTotal = () => {
+      let total = 0;
+
+      Array.from(itemsContainer.querySelectorAll(".item-row")).forEach((row) => {
+        const quantidade = parseFloat(row.querySelector('input[name="quantidade"]').value) || 0;
+        const preco = parseFloat(row.querySelector('input[name="preco"]').value) || 0;
+        const subtotal = quantidade * preco;
+
+        row.querySelector('input[name="valor"]').value = subtotal.toFixed(2);
+        total += subtotal;
+      });
+
+      valorTotalExibicao.textContent = formatarMoeda(total);
+    };
+
+    // Submeter formulário
+    formPedido.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+
+      const items = Array.from(itemsContainer.querySelectorAll(".item-row")).map((row) => {
+        return {
+          produtoId: row.querySelector('select[name="produto"]').value,
+          quantidade: parseInt(row.querySelector('input[name="quantidade"]').value),
+          precoUnitario: parseFloat(row.querySelector('input[name="preco"]').value)
+        };
+      });
+
+      const valorTotal = Array.from(itemsContainer.querySelectorAll('input[name="valor"]')).reduce(
+        (sum, input) => sum + parseFloat(input.value),
+        0
+      );
+
+      const dados = {
+        clienteNome: document.getElementById("pedidoClienteNome").value,
+        cestaId: document.getElementById("pedidoCestaId").value || null,
+        observacoes: document.getElementById("pedidoObservacoes").value,
+        valorTotal: valorTotal,
+        itens: items
+      };
+
       try {
-        const resposta = await fetch(API_PEDIDOS);
-        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-        const pedidos = await resposta.json();
+        if (pedidoAtual) {
+          await atualizarPedido(pedidoAtual.id, dados);
+          alert("Pedido atualizado com sucesso!");
+        } else {
+          await criarPedido(dados);
+          alert("Pedido criado com sucesso!");
+        }
+        modal.style.display = "none";
+        carregarListaPedidos();
+      } catch (erro) {
+        alert("Erro ao salvar pedido: " + erro.message);
+      }
+    });
 
-        if (!Array.isArray(pedidos) || pedidos.length === 0) {
-          lista.innerHTML = '<p class="empty">Nenhum pedido cadastrado.</p>';
+    // Carregar e exibir pedidos
+    async function carregarListaPedidos() {
+      const listaPedidos = document.getElementById("listaPedidos");
+      const termo = searchInput.value.toLowerCase();
+
+      try {
+        todosPedidos = await carregarPedidos();
+        todosProdutos = await carregarProdutos();
+
+        const pedidosFiltrados = todosPedidos.filter((p) =>
+          p.clienteNome.toLowerCase().includes(termo)
+        );
+
+        if (pedidosFiltrados.length === 0) {
+          listaPedidos.innerHTML =
+            '<tr><td colspan="5" class="empty">Nenhum pedido encontrado.</td></tr>';
           return;
         }
 
-        lista.innerHTML = '';
+        listaPedidos.innerHTML = pedidosFiltrados
+          .map((pedido) => {
+            const itensHtml = (pedido.itens || [])
+              .map((item) => {
+                const produto = todosProdutos.find((p) => p.id === item.produtoId);
+                const valor = (item.quantidade * item.precoUnitario).toFixed(2);
+                return `
+              <div class="pedido-item-line">
+                <span>${produto?.nome || "Produto não encontrado"} x${item.quantidade}</span>
+                <span>${formatarMoeda(valor)}</span>
+              </div>
+            `;
+              })
+              .join("");
 
-        pedidos.forEach(pedido => {
-          const div = document.createElement('div');
-          div.className = 'pedido-item';
-          div.innerHTML = `
-            <strong>${pedido.clienteNome || 'Cliente não informado'}</strong>
-            <div class="pedido-meta">
-              <div><b>Telefone:</b> ${pedido.clienteTelefone || '—'}</div>
-              <div><b>Endereço:</b> ${pedido.enderecoEntrega || '—'}</div>
-              <div><b>Cesta ID:</b> ${pedido.cestaId || '—'}</div>
-              <div><b>Quantidade:</b> ${pedido.quantidade ?? '—'}</div>
-              <div><b>Total:</b> R$ ${pedido.valorTotal !== undefined ? Number(pedido.valorTotal).toFixed(2).replace('.', ',') : '—'}</div>
-              <div><b>Data:</b> ${pedido.dataPedido || '—'}</div>
-            </div>
-            <span class="status">${pedido.status || 'PENDENTE'}</span>
+            const { bg, text } = formatarStatusBadge(pedido.status);
+
+            return `
+            <tr>
+              <td><span class="pedido-cliente">${pedido.clienteNome}</span></td>
+              <td>
+                <span class="status-badge status-${pedido.status}">
+                  ${formatarStatus(pedido.status)}
+                </span>
+              </td>
+              <td><span class="pedido-valor">${formatarMoeda(pedido.valorTotal)}</span></td>
+              <td>${formatarData(pedido.criadoEm).split(" ")[0]}</td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn-secondary btn-small" onclick="editarPedido('${pedido.id}')">Editar</button>
+                  <button class="btn btn-secondary btn-small" onclick="abrirStatus('${pedido.id}')">Status</button>
+                  <button class="btn btn-danger btn-small" onclick="confirmarDelecao('${pedido.id}', '${pedido.clienteNome}')">Deletar</button>
+                </div>
+              </td>
+            </tr>
+            ${itensHtml ? `
+            <tr>
+              <td colspan="5" style="background:#f9f7f3; padding: 8px 16px;">
+                <div class="pedido-itens-list">${itensHtml}</div>
+              </td>
+            </tr>
+            ` : ""}
           `;
-          lista.appendChild(div);
-        });
+          })
+          .join("");
       } catch (erro) {
-        lista.innerHTML = `<p class="empty">Erro ao carregar pedidos: ${erro.message || erro}</p>`;
-        console.error('Erro ao carregar pedidos:', erro);
+        console.error(erro);
+        listaPedidos.innerHTML =
+          '<tr><td colspan="5" class="empty">Erro ao carregar pedidos.</td></tr>';
       }
     }
 
-    function exibirUsuario() {
-      const nav = document.getElementById('navUsuario');
-      const nomeUsuario = localStorage.getItem('nomeUsuario');
+    async function editarPedido(id) {
+      const pedido = todosPedidos.find((p) => p.id === id);
+      if (!pedido) return;
 
-      if (nomeUsuario) {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
-          <span style="margin-left:16px;font-weight:700;color:#444;">${nomeUsuario}</span>
-          <button id="btnLogout" class="btn btn-ghost" style="margin-left:12px;">Sair</button>
-        `;
+      pedidoAtual = pedido;
+      document.getElementById("modalTitle").textContent = "Editar Pedido";
+      document.getElementById("pedidoClienteNome").value = pedido.clienteNome;
+      document.getElementById("pedidoCestaId").value = pedido.cestaId || "";
+      document.getElementById("pedidoObservacoes").value = pedido.observacoes || "";
 
-        document.getElementById('btnLogout').addEventListener('click', () => {
-          localStorage.removeItem('nomeUsuario');
-          localStorage.removeItem('emailUsuario');
-          window.location.href = 'index.html';
-        });
-      } else {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <a href="pedidos.html" style="color:#c59d5f">Pedidos</a>
-          <a href="login.html">Login</a>
+      itemCount = 0;
+      itemsContainer.innerHTML = "";
+      todosProdutos = await carregarProdutos();
+
+      (pedido.itens || []).forEach((item) => {
+        itemCount++;
+        const selectProdutos = todosProdutos
+          .map(
+            (p) =>
+              `<option value="${p.id}" ${item.produtoId === p.id ? "selected" : ""}>${p.nome}</option>`
+          )
+          .join("");
+
+        const valor = (item.quantidade * item.precoUnitario).toFixed(2);
+
+        const itemHtml = `
+          <div class="item-row" id="item-${itemCount}">
+            <select name="produto" required onchange="atualizarPreco(this)">${selectProdutos}</select>
+            <input type="number" name="quantidade" value="${item.quantidade}" min="1" required onchange="atualizarValorTotal()" />
+            <input type="number" name="preco" value="${item.precoUnitario.toFixed(2)}" min="0" step="0.01" required readonly style="background:#f0f0f0;" />
+            <input type="number" name="valor" value="${valor}" min="0" step="0.01" required readonly style="background:#f0f0f0;" />
+            <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
+          </div>
         `;
+        itemsContainer.innerHTML += itemHtml;
+      });
+
+      atualizarValorTotal();
+      modal.style.display = "block";
+    }
+
+    window.abrirStatus = async (id) => {
+      const pedido = todosPedidos.find((p) => p.id === id);
+      if (!pedido) return;
+
+      const novoStatus = prompt(
+        `Status atual: ${formatarStatus(pedido.status)}\n\nNovos status disponíveis:\npendente\nconfirmado\nem_preparacao\nsaiu_para_entrega\nentregue\ncancelado\n\nDigite o novo status:`,
+        pedido.status
+      );
+
+      if (novoStatus) {
+        try {
+          await atualizarStatusPedido(id, novoStatus);
+          alert("Status atualizado com sucesso!");
+          carregarListaPedidos();
+        } catch (erro) {
+          alert("Erro ao atualizar status: " + erro.message);
+        }
+      }
+    };
+
+    async function confirmarDelecao(id, nome) {
+      if (confirm(`Tem certeza que deseja deletar o pedido do cliente "${nome}"?`)) {
+        try {
+          await deletarPedido(id);
+          alert("Pedido deletado com sucesso!");
+          carregarListaPedidos();
+        } catch (erro) {
+          alert("Erro ao deletar pedido: " + erro.message);
+        }
       }
     }
 
-    document.getElementById('btnAtualizar').addEventListener('click', carregarPedidos);
-    window.addEventListener('load', () => {
-      carregarPedidos();
-      exibirUsuario();
-    });
+    // Atualizar
+    btnAtualizar.addEventListener("click", carregarListaPedidos);
+
+    // Buscar em tempo real
+    searchInput.addEventListener("input", carregarListaPedidos);
+
+    // Carregar ao iniciar
+    carregarListaPedidos();
   </script>
 </body>
 </html>

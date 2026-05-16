@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cestas - Grãos & Cestas</title>
+  <style>
+    :root {
+      --bg: #e6bb84;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --gold: #c59d5f;
+      --border: #e7e1d8;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e7e1d8;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand strong {
+      font-size: 22px;
+      color: #111;
+    }
+
+    .brand small {
+      font-size: 12px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: var(--gold);
+    }
+
+    nav a.active {
+      color: var(--gold);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px 40px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .section-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #b08a50;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .search-box {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+
+    .card-price {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--gold);
+      margin: 8px 0;
+    }
+
+    .card-itens {
+      margin: 12px 0;
+      padding: 12px;
+      background: #f9f7f3;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .card-item-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #dcffde;
+      color: #009200;
+    }
+
+    .badge-inactive {
+      background: #ffe6e6;
+      color: #a30000;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background-color: var(--card);
+      margin: 5% auto;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      color: var(--muted);
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .items-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: #f9f7f3;
+      border-radius: 8px;
+    }
+
+    .items-section h4 {
+      margin-top: 0;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 60px auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .item-row select,
+    .item-row input {
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <strong>Grãos & Cestas</strong>
+      <small>Admin Panel</small>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="produtos.html">Produtos</a>
+      <a href="cestas.html" class="active">Cestas</a>
+      <a href="pedidos.html">Pedidos</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">Cestas</h2>
+    <p class="section-subtitle">Gerencie as cestas (modelos prontos) disponíveis.</p>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="btnNovasCesta">+ Nova Cesta</button>
+      <button class="btn btn-secondary" id="btnAtualizar">Atualizar</button>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar cestas..." />
+      </div>
+    </div>
+
+    <div class="grid" id="listaCestas"></div>
+  </main>
+
+  <!-- Modal para Criar/Editar Cesta -->
+  <div id="modalCesta" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <div class="modal-header" id="modalTitle">Nova Cesta</div>
+
+      <form id="formCesta">
+        <div class="form-group">
+          <label for="cestaNome">Nome da Cesta *</label>
+          <input type="text" id="cestaNome" required />
+        </div>
+
+        <div class="form-group">
+          <label for="cestaDescricao">Descrição</label>
+          <textarea id="cestaDescricao"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cestaPrecoBase">Preço Base (R$) *</label>
+          <input type="number" id="cestaPrecoBase" step="0.01" min="0" required />
+        </div>
+
+        <div class="form-group">
+          <label for="cestaAtiva">Status</label>
+          <select id="cestaAtiva">
+            <option value="true">Ativa</option>
+            <option value="false">Inativa</option>
+          </select>
+        </div>
+
+        <div class="items-section">
+          <h4>Itens da Cesta</h4>
+          <div id="itemsContainer"></div>
+          <button type="button" class="btn btn-secondary btn-small" id="btnAdicionarItem">
+            + Adicionar Item
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelar">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    const modal = document.getElementById("modalCesta");
+    const modalClose = document.querySelector(".modal-close");
+    const btnNovasCesta = document.getElementById("btnNovasCesta");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const btnAtualizar = document.getElementById("btnAtualizar");
+    const formCesta = document.getElementById("formCesta");
+    const searchInput = document.getElementById("searchInput");
+    const btnAdicionarItem = document.getElementById("btnAdicionarItem");
+    const itemsContainer = document.getElementById("itemsContainer");
+
+    let cestaAtual = null;
+    let todosCestas = [];
+    let todosProdutos = [];
+    let itemCount = 0;
+
+    // Abrir modal para nova cesta
+    btnNovasCesta.addEventListener("click", async () => {
+      cestaAtual = null;
+      itemCount = 0;
+      document.getElementById("modalTitle").textContent = "Nova Cesta";
+      formCesta.reset();
+      itemsContainer.innerHTML = "";
+      todosProdutos = await carregarProdutos();
+      modal.style.display = "block";
+    });
+
+    // Fechar modal
+    modalClose.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    btnCancelar.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (evento) => {
+      if (evento.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+
+    // Adicionar item à cesta
+    btnAdicionarItem.addEventListener("click", () => {
+      itemCount++;
+      const selectProdutos = todosProdutos
+        .map(
+          (p) => `<option value="${p.id}">${p.nome} - ${formatarMoeda(p.preco)}</option>`
+        )
+        .join("");
+
+      const itemHtml = `
+        <div class="item-row" id="item-${itemCount}">
+          <select name="produto" required>${selectProdutos}</select>
+          <input type="number" name="quantidade" value="1" min="1" required />
+          <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
+        </div>
+      `;
+      itemsContainer.innerHTML += itemHtml;
+    });
+
+    window.removerItem = (id) => {
+      document.getElementById(`item-${id}`).remove();
+    };
+
+    // Submeter formulário
+    formCesta.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+
+      const items = Array.from(itemsContainer.querySelectorAll(".item-row")).map(
+        (row) => {
+          const select = row.querySelector('select[name="produto"]');
+          const input = row.querySelector('input[name="quantidade"]');
+          return {
+            produtoId: select.value,
+            quantidade: parseInt(input.value)
+          };
+        }
+      );
+
+      const dados = {
+        nome: document.getElementById("cestaNome").value,
+        descricao: document.getElementById("cestaDescricao").value,
+        precoBase: parseFloat(document.getElementById("cestaPrecoBase").value),
+        ativa: document.getElementById("cestaAtiva").value === "true",
+        itens: items
+      };
+
+      try {
+        if (cestaAtual) {
+          await atualizarCesta(cestaAtual.id, dados);
+          alert("Cesta atualizada com sucesso!");
+        } else {
+          await criarCesta(dados);
+          alert("Cesta criada com sucesso!");
+        }
+        modal.style.display = "none";
+        carregarListaCestas();
+      } catch (erro) {
+        alert("Erro ao salvar cesta: " + erro.message);
+      }
+    });
+
+    // Carregar e exibir cestas
+    async function carregarListaCestas() {
+      const listaCestas = document.getElementById("listaCestas");
+      const termo = searchInput.value.toLowerCase();
+
+      try {
+        todosCestas = await carregarCestas();
+        todosProdutos = await carregarProdutos();
+
+        const cestasFiltradas = todosCestas.filter(
+          (c) =>
+            c.nome.toLowerCase().includes(termo) ||
+            c.descricao.toLowerCase().includes(termo)
+        );
+
+        if (cestasFiltradas.length === 0) {
+          listaCestas.innerHTML = '<div class="empty">Nenhuma cesta encontrada.</div>';
+          return;
+        }
+
+        listaCestas.innerHTML = cestasFiltradas
+          .map((cesta) => {
+            const itensHtml = (cesta.itens || [])
+              .map((item) => {
+                const produto = todosProdutos.find((p) => p.id === item.produtoId);
+                return `
+              <div class="card-item-line">
+                <span>${produto?.nome || "Produto não encontrado"}</span>
+                <span>Qty: ${item.quantidade}</span>
+              </div>
+            `;
+              })
+              .join("");
+
+            return `
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">${cesta.nome}</h3>
+                <span class="badge ${cesta.ativa ? "badge-active" : "badge-inactive"}">
+                  ${cesta.ativa ? "Ativa" : "Inativa"}
+                </span>
+              </div>
+              <p class="card-description">${cesta.descricao || "Sem descrição"}</p>
+              <div class="card-price">Base: ${formatarMoeda(cesta.precoBase)}</div>
+              ${itensHtml ? `<div class="card-itens">${itensHtml}</div>` : ""}
+              <div class="card-footer">
+                <div></div>
+                <div class="card-actions">
+                  <button class="btn btn-secondary btn-small" onclick="editarCesta('${cesta.id}')">Editar</button>
+                  <button class="btn btn-danger btn-small" onclick="confirmarDelecao('${cesta.id}', '${cesta.nome}')">Deletar</button>
+                </div>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+      } catch (erro) {
+        listaCestas.innerHTML = '<div class="empty">Erro ao carregar cestas.</div>';
+      }
+    }
+
+    async function editarCesta(id) {
+      const cesta = todosCestas.find((c) => c.id === id);
+      if (!cesta) return;
+
+      cestaAtual = cesta;
+      document.getElementById("modalTitle").textContent = "Editar Cesta";
+      document.getElementById("cestaNome").value = cesta.nome;
+      document.getElementById("cestaDescricao").value = cesta.descricao || "";
+      document.getElementById("cestaPrecoBase").value = cesta.precoBase;
+      document.getElementById("cestaAtiva").value = cesta.ativa ? "true" : "false";
+
+      itemCount = 0;
+      itemsContainer.innerHTML = "";
+      todosProdutos = await carregarProdutos();
+
+      (cesta.itens || []).forEach((item) => {
+        itemCount++;
+        const selectProdutos = todosProdutos
+          .map((p) => `<option value="${p.id}" ${item.produtoId === p.id ? "selected" : ""}>${p.nome} - ${formatarMoeda(p.preco)}</option>`)
+          .join("");
+
+        const itemHtml = `
+          <div class="item-row" id="item-${itemCount}">
+            <select name="produto" required>${selectProdutos}</select>
+            <input type="number" name="quantidade" value="${item.quantidade}" min="1" required />
+            <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
+          </div>
+        `;
+        itemsContainer.innerHTML += itemHtml;
+      });
+
+      modal.style.display = "block";
+    }
+
+    async function confirmarDelecao(id, nome) {
+      if (confirm(`Tem certeza que deseja deletar a cesta "${nome}"?`)) {
+        try {
+          await deletarCesta(id);
+          alert("Cesta deletada com sucesso!");
+          carregarListaCestas();
+        } catch (erro) {
+          alert("Erro ao deletar cesta: " + erro.message);
+        }
+      }
+    }
+
+    // Atualizar
+    btnAtualizar.addEventListener("click", carregarListaCestas);
+
+    // Buscar em tempo real
+    searchInput.addEventListener("input", carregarListaCestas);
+
+    // Carregar ao iniciar
+    carregarListaCestas();
+  </script>
+</body>
+</html>

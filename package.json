@@ -1,13 +1,8 @@
 {
   "name": "trabalho-semestral-lp2",
   "private": true,
-  "workspaces": [
-    "front",
-    "back/catalogo-cestas",
-    "back/pedidos"
-  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace front\" \"npm run dev --workspace back/catalogo-cestas\" \"npm run dev --workspace back/pedidos\"",
+    "dev": "concurrently \"npm --prefix back/produtos run dev\" \"npm --prefix back/catalogo-cestas run dev\" \"npm --prefix back/pedidos run dev\"",
     "generate-config": "node scripts/generate-supabase-config.js"
   },
   "devDependencies": {
