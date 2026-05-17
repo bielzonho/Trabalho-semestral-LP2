@@ -3,7 +3,7 @@ import cors from "cors";
 import pedidosRoutes from "./routes/pedido.routes";
 
 const app = express();
-const PORT = 3001;
+const PORT = 3011;
 
 app.use(cors());
 app.use(express.json());

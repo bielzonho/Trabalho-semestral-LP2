@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
+
+// Encontrar o arquivo .env na raiz do projeto
+const projectRoot = path.resolve(__dirname, '..');
+require('dotenv').config({ path: path.resolve(projectRoot, '.env') });
 
 const url = (process.env.DB_URL || '').trim();
 const key = (process.env.API_KEY || '').trim();

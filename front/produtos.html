@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produtos - Grãos & Cestas</title>
+  <style>
+    :root {
+      --bg: #e6bb84;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --gold: #c59d5f;
+      --border: #e7e1d8;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e7e1d8;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand strong {
+      font-size: 22px;
+      color: #111;
+    }
+
+    .brand small {
+      font-size: 12px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: var(--gold);
+    }
+
+    nav a.active {
+      color: var(--gold);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px 40px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .section-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #b08a50;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .search-box {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-price {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--gold);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #dcffde;
+      color: #009200;
+    }
+
+    .badge-inactive {
+      background: #ffe6e6;
+      color: #a30000;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background-color: var(--card);
+      margin: 10% auto;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      color: var(--muted);
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <strong>Grãos & Cestas</strong>
+      <small>Admin Panel</small>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="produtos.html" class="active">Produtos</a>
+      <a href="cestas.html">Cestas</a>
+      <a href="pedidos.html">Pedidos</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">Produtos</h2>
+    <p class="section-subtitle">Gerencie os produtos disponíveis no catálogo.</p>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="btnNovosProduto">+ Novo Produto</button>
+      <button class="btn btn-secondary" id="btnAtualizar">Atualizar</button>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar produtos..." />
+      </div>
+    </div>
+
+    <div class="grid" id="listaProdutos"></div>
+  </main>
+
+  <!-- Modal para Criar/Editar Produto -->
+  <div id="modalProduto" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <div class="modal-header" id="modalTitle">Novo Produto</div>
+
+      <form id="formProduto">
+        <div class="form-group">
+          <label for="produtoNome">Nome do Produto *</label>
+          <input type="text" id="produtoNome" required />
+        </div>
+
+        <div class="form-group">
+          <label for="produtoDescricao">Descrição</label>
+          <textarea id="produtoDescricao"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="produtoPreco">Preço (R$) *</label>
+          <input type="number" id="produtoPreco" step="0.01" min="0" required />
+        </div>
+
+        <div class="form-group">
+          <label for="produtoAtivo">Status</label>
+          <select id="produtoAtivo">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelar">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    const modal = document.getElementById("modalProduto");
+    const modalClose = document.querySelector(".modal-close");
+    const btnNovosProduto = document.getElementById("btnNovosProduto");
+    const btnCancelar = document.getElementById("btnCancelar");
+    const btnAtualizar = document.getElementById("btnAtualizar");
+    const formProduto = document.getElementById("formProduto");
+    const searchInput = document.getElementById("searchInput");
+    let produtoAtual = null;
+    let todosProdutos = [];
+
+    // Abrir modal para novo produto
+    btnNovosProduto.addEventListener("click", () => {
+      produtoAtual = null;
+      document.getElementById("modalTitle").textContent = "Novo Produto";
+      formProduto.reset();
+      modal.style.display = "block";
+    });
+
+    // Fechar modal
+    modalClose.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    btnCancelar.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (evento) => {
+      if (evento.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+
+    // Submeter formulário
+    formProduto.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+
+      const dados = {
+        nome: document.getElementById("produtoNome").value,
+        descricao: document.getElementById("produtoDescricao").value,
+        preco: parseFloat(document.getElementById("produtoPreco").value),
+        ativo: document.getElementById("produtoAtivo").value === "true"
+      };
+
+      try {
+        if (produtoAtual) {
+          await atualizarProduto(produtoAtual.id, dados);
+          alert("Produto atualizado com sucesso!");
+        } else {
+          await criarProduto(dados);
+          alert("Produto criado com sucesso!");
+        }
+        modal.style.display = "none";
+        carregarListaProdutos();
+      } catch (erro) {
+        alert("Erro ao salvar produto: " + erro.message);
+      }
+    });
+
+    // Carregar e exibir produtos
+    async function carregarListaProdutos() {
+      const listaProdutos = document.getElementById("listaProdutos");
+      const termo = searchInput.value.toLowerCase();
+
+      try {
+        todosProdutos = await carregarProdutos();
+        const produtosFiltrados = todosProdutos.filter(
+          (p) =>
+            p.nome.toLowerCase().includes(termo) ||
+            p.descricao.toLowerCase().includes(termo)
+        );
+
+        if (produtosFiltrados.length === 0) {
+          listaProdutos.innerHTML =
+            '<div class="empty">Nenhum produto encontrado.</div>';
+          return;
+        }
+
+        listaProdutos.innerHTML = produtosFiltrados
+          .map(
+            (produto) => `
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">${produto.nome}</h3>
+              <span class="badge ${produto.ativo ? "badge-active" : "badge-inactive"}">
+                ${produto.ativo ? "Ativo" : "Inativo"}
+              </span>
+            </div>
+            <p class="card-description">${produto.descricao || "Sem descrição"}</p>
+            <div class="card-footer">
+              <div class="card-price">${formatarMoeda(produto.preco)}</div>
+              <div class="card-actions">
+                <button class="btn btn-secondary btn-small" onclick="editarProduto('${produto.id}')">Editar</button>
+                <button class="btn btn-danger btn-small" onclick="confirmarDelecao('${produto.id}', '${produto.nome}')">Deletar</button>
+              </div>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      } catch (erro) {
+        listaProdutos.innerHTML =
+          '<div class="empty">Erro ao carregar produtos.</div>';
+      }
+    }
+
+    async function editarProduto(id) {
+      const produto = todosProdutos.find((p) => p.id === id);
+      if (!produto) return;
+
+      produtoAtual = produto;
+      document.getElementById("modalTitle").textContent = "Editar Produto";
+      document.getElementById("produtoNome").value = produto.nome;
+      document.getElementById("produtoDescricao").value = produto.descricao || "";
+      document.getElementById("produtoPreco").value = produto.preco;
+      document.getElementById("produtoAtivo").value = produto.ativo ? "true" : "false";
+      modal.style.display = "block";
+    }
+
+    async function confirmarDelecao(id, nome) {
+      if (confirm(`Tem certeza que deseja deletar o produto "${nome}"?`)) {
+        try {
+          await deletarProduto(id);
+          alert("Produto deletado com sucesso!");
+          carregarListaProdutos();
+        } catch (erro) {
+          alert("Erro ao deletar produto: " + erro.message);
+        }
+      }
+    }
+
+    // Atualizar
+    btnAtualizar.addEventListener("click", carregarListaProdutos);
+
+    // Buscar em tempo real
+    searchInput.addEventListener("input", carregarListaProdutos);
+
+    // Carregar ao iniciar
+    carregarListaProdutos();
+  </script>
+</body>
+</html>
