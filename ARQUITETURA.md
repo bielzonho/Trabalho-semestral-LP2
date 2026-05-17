@@ -43,7 +43,7 @@
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                       │
 │  ┌──────────────────────┐  ┌──────────────────────┐                │
-│  │  PRODUTOS (3002)     │  │  CESTAS (3000)       │                │
+│  │  PRODUTOS (3012)     │  │  CESTAS (3010)       │                │
 │  ├──────────────────────┤  ├──────────────────────┤                │
 │  │ produtos.routes.ts   │  │ cestas.routes.ts     │                │
 │  │ • GET /produtos      │  │ • GET /cestas        │                │
@@ -51,12 +51,12 @@
 │  │ • PUT /produtos/:id  │  │ • POST /:id/itens    │                │
 │  │ • DELETE /produtos   │  │ • DELETE /:id/itens  │                │
 │  │                      │  │                      │                │
-│  │ produtos.ts (dados)  │  │ cestas.ts (dados)    │                │
+│  │ database.ts          │  │ database.ts          │                │
 │  │ produto.ts (tipos)   │  │ cesta.ts (tipos)     │                │
 │  └──────────────────────┘  └──────────────────────┘                │
 │                                                                       │
 │  ┌──────────────────────┐                                           │
-│  │  PEDIDOS (3001)      │                                           │
+│  │  PEDIDOS (3011)      │                                           │
 │  ├──────────────────────┤                                           │
 │  │ pedido.routes.ts     │                                           │
 │  │ • GET /pedidos       │                                           │
@@ -65,30 +65,22 @@
 │  │ • POST /:id/itens    │                                           │
 │  │ • DELETE /:id/itens  │                                           │
 │  │                      │                                           │
-│  │ pedidos.ts (dados)   │                                           │
+│  │ database.ts          │                                           │
 │  │ pedido.ts (tipos)    │                                           │
 │  └──────────────────────┘                                           │
 │                                                                       │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    CAMADA DE DADOS (Memória)                        │
+│                    CAMADA DE DADOS (Supabase)                       │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                       │
-│  Array<Produto>  ←→  Array<Cesta>  ←→  Array<Pedido>              │
+│  produtos  ←→  cestas/cesta_itens  ←→  pedidos/pedido_itens       │
 │                                                                       │
-│  [8 produtos]        [2 cestas]         [2 pedidos]                │
-│  • Café Premium      • Clássica         • André                    │
-│  • Pão Francês       • Premium          • Mariana                  │
-│  • Croissant         • [itens]          • [itens]                  │
-│  • Leite                                                            │
-│  • Queijo                                                           │
-│  • Geleia                                                           │
-│  • Suco                                                             │
-│  • Maçã                                                             │
+│  Persistência real no banco; os dados sobrevivem a reinícios       │
 │                                                                       │
-│  💡 Para produção, integrar com Supabase PostgreSQL                │
-│     usando o schema SQL fornecido                                   │
+│  💡 Configurado via DB_URL/API_KEY ou SUPABASE_URL/SUPABASE_KEY    │
+│     usando as tabelas SQL fornecidas                                │
 │                                                                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -101,7 +93,7 @@ produtos.html (form)
     ↓ criarProduto()
     ↓ fetch POST /produtos
     ↓ produtos.routes.ts
-    ↓ Array<Produto>
+    ↓ tabela produtos (Supabase)
     ↓ resposta JSON
     ↓ api.js → modal fecha, lista atualiza
 ```
@@ -112,8 +104,8 @@ cestas.html (form com items)
     ↓ criarCesta() com itens[]
     ↓ fetch POST /cestas
     ↓ cestas.routes.ts
-    ↓ valida e cria CestaItem[]
-    ↓ Array<Cesta> com Array<CestaItem>
+    ↓ valida e cria registros em cestas/cesta_itens
+    ↓ tabelas cestas e cesta_itens (Supabase)
     ↓ resposta JSON
     ↓ api.js → modal fecha, grid atualiza
 ```
@@ -125,9 +117,9 @@ pedidos.html (form com items)
     ↓ criarPedido() com itens[]
     ↓ fetch POST /pedidos
     ↓ pedidos.routes.ts
-    ↓ mapeia para PedidoItem[]
+    ↓ mapeia para registros de pedido_itens
     ↓ calcula valorTotal = sum(quantidade * preço)
-    ↓ Array<Pedido> com Array<PedidoItem>
+    ↓ tabelas pedidos e pedido_itens (Supabase)
     ↓ resposta JSON
     ↓ api.js → modal fecha, tabela atualiza
 ```
@@ -266,7 +258,7 @@ PedidoItem       ↔ pedido_itens
 ## Endpoints REST API
 
 ```
-┌─ PRODUTOS (localhost:3002) ─────────────────────┐
+┌─ PRODUTOS (localhost:3012) ─────────────────────┐
 │ GET    /produtos           → todos               │
 │ GET    /produtos/ativos    → apenas ativos       │
 │ GET    /produtos/:id       → específico          │
@@ -275,7 +267,7 @@ PedidoItem       ↔ pedido_itens
 │ DELETE /produtos/:id       → deletar             │
 └────────────────────────────────────────────────┘
 
-┌─ CESTAS (localhost:3000) ────────────────────────┐
+┌─ CESTAS (localhost:3010) ────────────────────────┐
 │ GET    /cestas             → todas               │
 │ GET    /cestas/ativas      → apenas ativas       │
 │ GET    /cestas/:id         → específica          │
@@ -286,7 +278,7 @@ PedidoItem       ↔ pedido_itens
 │ DELETE /cestas/:cId/itens/:iId → remover item   │
 └────────────────────────────────────────────────┘
 
-┌─ PEDIDOS (localhost:3001) ───────────────────────┐
+┌─ PEDIDOS (localhost:3011) ───────────────────────┐
 │ GET    /pedidos            → todos               │
 │ GET    /pedidos/:id        → específico          │
 │ GET    /pedidos/status/:st → por status          │
@@ -314,9 +306,8 @@ Backend (Microserviços)
 ├── UUID (ID generation)
 └── CORS (cross-origin)
 
-Dados (Atualmente em Memória)
-├── Arrays em TypeScript
-└── 🔜 Supabase PostgreSQL (para produção)
+Dados
+└── Supabase PostgreSQL
 
 Ferramenta de Build
 ├── TypeScript Compiler
@@ -326,7 +317,7 @@ Ferramenta de Build
 ## Performance
 
 ### Requisições de API
-- **Latência:** < 10ms (em memória)
+- **Latência:** depende da conexão com o Supabase
 - **Tamanho da resposta:** 1-50 KB
 - **Timeout:** Não aplicável (servidor local)
 
@@ -337,11 +328,6 @@ Ferramenta de Build
 - **Cálculo de totais:** < 50ms
 
 ## Escalabilidade
-
-**Atual (Em Memória):**
-- ✅ Até ~1000 produtos
-- ✅ Até ~500 cestas com itens
-- ✅ Até ~1000 pedidos
 
 **Com Supabase:**
 - ✅ Milhões de registros

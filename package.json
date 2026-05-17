@@ -2,6 +2,7 @@
   "name": "trabalho-semestral-lp2",
   "private": true,
   "scripts": {
+    "install:services": "npm --prefix back/produtos install && npm --prefix back/catalogo-cestas install && npm --prefix back/pedidos install",
     "dev": "concurrently \"npm --prefix back/produtos run dev\" \"npm --prefix back/catalogo-cestas run dev\" \"npm --prefix back/pedidos run dev\"",
     "generate-config": "node scripts/generate-supabase-config.js"
   },
