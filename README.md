@@ -1,7 +1,7 @@
 # Trabalho-semestral-LP2
 Trabalho semestral de linguagens de Programação 2 e Arquitetura de Sistemas Computacionais, com desenvolvimento backend e frontend, com Javascript e Typescript, tanto para Back End quanto para Front End.
 
-## 📦 Sistema de Cestas e Pedidos - Grãos & Cestas
+## 📦 Sistema de Cestas e Pedidos - Grão & Cestas
 
 Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de clientes.
 
