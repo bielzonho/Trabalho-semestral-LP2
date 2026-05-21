@@ -150,17 +150,32 @@ Configure o arquivo `.env` na raiz do projeto com:
 ```env
 DB_URL=sua_url_do_supabase
 SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_do_supabase
+SUPABASE_IPV4=seu_host_ipv4_do_banco
+SUPABASE_DB_PASSWORD=sua_senha_do_banco
 ```
 
 Também são aceitos os nomes `SUPABASE_URL`, `SERVICE_ROLE_KEY` e `DB_SERVICE_KEY`.
+
+Para popular as tabelas via conexão direta PostgreSQL, instale o `psql` e rode:
+
+```bash
+npm run seed:db
+```
+
+O script usa estes valores do `.env`:
+- `SUPABASE_IPV4` - host IPv4 do banco
+- `SUPABASE_DB_PASSWORD` - senha do banco
+- `SUPABASE_DB_USER` - opcional, padrão `postgres`
+- `SUPABASE_DB_NAME` - opcional, padrão `postgres`
+- `SUPABASE_DB_PORT` - opcional, padrão `5432`
 
 > A chave `sb_publishable_...` funciona como chave pública e respeita as regras de RLS do Supabase. Se suas tabelas estiverem com RLS ativo e sem policies de leitura/escrita, as APIs podem retornar listas vazias ou "não encontrado", mesmo com dados no banco. Para backend local, prefira a `service_role key` no `.env` e nunca coloque essa chave no frontend.
 
 Se preferir continuar usando chave pública, crie policies no Supabase, por exemplo:
 
 ```sql
-CREATE POLICY "Permitir leitura anon produtos"
-ON produtos FOR SELECT
+CREATE POLICY "Permitir leitura anon itens"
+ON itens FOR SELECT
 TO anon
 USING (true);
 
@@ -174,23 +189,29 @@ ON cesta_itens FOR SELECT
 TO anon
 USING (true);
 
-CREATE POLICY "Permitir leitura anon pedidos"
-ON pedidos FOR SELECT
+CREATE POLICY "Permitir leitura anon carrinhos"
+ON carrinhos FOR SELECT
 TO anon
 USING (true);
 
-CREATE POLICY "Permitir leitura anon pedido_itens"
-ON pedido_itens FOR SELECT
+CREATE POLICY "Permitir leitura anon carrinho_itens_adicionais"
+ON carrinho_itens_adicionais FOR SELECT
+TO anon
+USING (true);
+
+CREATE POLICY "Permitir leitura anon vendas_cestas"
+ON vendas_cestas FOR SELECT
 TO anon
 USING (true);
 ```
 
 As rotas consultam diretamente as tabelas:
-- `produtos`
+- `itens`
 - `cestas`
 - `cesta_itens`
-- `pedidos`
-- `pedido_itens`
+- `carrinhos`
+- `carrinho_itens_adicionais`
+- `vendas_cestas`
 
 ## 🎨 Frontend
 
@@ -214,11 +235,20 @@ O frontend foi construído com HTML5, CSS3 e JavaScript vanilla, sem dependênci
 ## 📝 Schema de Banco de Dados
 
 O schema SQL completo foi fornecido e inclui:
-- Tabela `produtos` - Catálogo de produtos
+- Tabela `itens` - Catálogo de produtos avulsos
 - Tabela `cestas` - Modelos de cestas prontas
 - Tabela `cesta_itens` - Itens que compõem cada cesta
-- Tabela `pedidos` - Pedidos dos clientes
-- Tabela `pedido_itens` - Itens de cada pedido com preço unitário
+- Tabela `carrinhos` - Carrinhos criados a partir de uma cesta
+- Tabela `carrinho_itens_adicionais` - Itens avulsos adicionados ao carrinho
+- Tabela `vendas_cestas` - Vendas registradas das cestas
+
+A tabela `vendas_cestas` também guarda os dados do cliente usados pelo frontend:
+- `cliente_nome`
+- `cliente_telefone`
+- `endereco_entrega`
+- `observacoes`
+- `status`
+- `carrinho_id`
 
 ## 🔗 Fluxo de Dados
 

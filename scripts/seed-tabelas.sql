@@ -1,104 +1,136 @@
--- Script de seed para popular as tabelas do projeto
--- Inclui produtos, cestas, cesta_itens, pedidos e pedido_itens
+-- Script de criação e seed para o modelo atual do projeto
+-- Tabelas: itens, cestas, cesta_itens, carrinhos, carrinho_itens_adicionais, vendas_cestas
 
--- 1. Criação das tabelas
-CREATE TABLE IF NOT EXISTS produtos (
-  id UUID PRIMARY KEY,
-  nome TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS itens (
+  id SERIAL PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
   descricao TEXT,
-  preco NUMERIC(10,2) NOT NULL,
-  ativo BOOLEAN NOT NULL DEFAULT TRUE,
-  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  preco DECIMAL(10, 2) NOT NULL,
+  quantidade_estoque INT NOT NULL DEFAULT 0,
+  quantidade_vendas INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS cestas (
-  id UUID PRIMARY KEY,
-  nome TEXT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
   descricao TEXT,
-  preco NUMERIC(10,2) NOT NULL,
-  ativa BOOLEAN NOT NULL DEFAULT TRUE,
-  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  preco DECIMAL(10, 2) NOT NULL,
+  total_itens INT NOT NULL DEFAULT 0,
+  quantidade_vendas INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS cesta_itens (
-  id UUID PRIMARY KEY,
-  cesta_id UUID NOT NULL REFERENCES cestas(id) ON DELETE CASCADE,
-  produto_id UUID NOT NULL REFERENCES produtos(id) ON DELETE RESTRICT,
-  quantidade INTEGER NOT NULL DEFAULT 1,
-  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  cesta_id INT NOT NULL,
+  item_id INT NOT NULL,
+  PRIMARY KEY (cesta_id, item_id),
+  FOREIGN KEY (cesta_id) REFERENCES cestas(id) ON DELETE CASCADE,
+  FOREIGN KEY (item_id) REFERENCES itens(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS pedidos (
-  id UUID PRIMARY KEY,
-  nome_cliente TEXT NOT NULL,
-  status TEXT NOT NULL,
-  valor_total NUMERIC(10,2) NOT NULL,
-  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS carrinhos (
+  id SERIAL PRIMARY KEY,
+  cesta_id INT NOT NULL REFERENCES cestas(id) ON DELETE CASCADE,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS pedido_itens (
-  id UUID PRIMARY KEY,
-  pedido_id UUID NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-  produto_id UUID NOT NULL REFERENCES produtos(id) ON DELETE RESTRICT,
-  quantidade INTEGER NOT NULL DEFAULT 1,
-  preco_unitario NUMERIC(10,2) NOT NULL,
-  criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS carrinho_itens_adicionais (
+  id SERIAL PRIMARY KEY,
+  carrinho_id INT NOT NULL REFERENCES carrinhos(id) ON DELETE CASCADE,
+  item_id INT NOT NULL REFERENCES itens(id) ON DELETE CASCADE,
+  quantidade INT NOT NULL DEFAULT 1
 );
 
--- 2. Inserir produtos existentes
-INSERT INTO produtos (id, nome, descricao, preco, ativo)
+CREATE TABLE IF NOT EXISTS vendas_cestas (
+  id SERIAL PRIMARY KEY,
+  cesta_id INT NOT NULL REFERENCES cestas(id) ON DELETE CASCADE,
+  carrinho_id INT REFERENCES carrinhos(id) ON DELETE SET NULL,
+  cliente_nome VARCHAR(150) NOT NULL DEFAULT 'Cliente',
+  cliente_telefone VARCHAR(30),
+  endereco_entrega TEXT,
+  observacoes TEXT,
+  status VARCHAR(30) NOT NULL DEFAULT 'pendente',
+  preco_pago DECIMAL(10, 2) NOT NULL,
+  pago BOOLEAN NOT NULL DEFAULT FALSE,
+  data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE vendas_cestas
+  ADD COLUMN IF NOT EXISTS carrinho_id INT REFERENCES carrinhos(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS cliente_nome VARCHAR(150) NOT NULL DEFAULT 'Cliente',
+  ADD COLUMN IF NOT EXISTS cliente_telefone VARCHAR(30),
+  ADD COLUMN IF NOT EXISTS endereco_entrega TEXT,
+  ADD COLUMN IF NOT EXISTS observacoes TEXT,
+  ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'pendente';
+
+INSERT INTO itens (titulo, descricao, preco, quantidade_estoque)
 VALUES
-  ('a5d8c6a2-94b5-4f5d-a1f3-0fcbdf6a8b1d', 'Café Premium', 'Café gourmet em grãos, torra média.', 28.90, TRUE),
-  ('b9a8a8f1-2f12-4f1f-8e9d-5a9e03d2a5f1', 'Pão Francês', 'Pão macio e crocante, feito na hora.', 3.50, TRUE),
-  ('c6b7e4d2-3f8a-4b1d-8c1a-49e2d6f7a0c1', 'Croissant', 'Croissant amanteigado com leve toque doce.', 7.90, TRUE),
-  ('d1f2e3c4-5b6a-4c7d-8e9f-1a2b3c4d5e6f', 'Leite Integral', 'Leite fresco integral 1L.', 6.20, TRUE),
-  ('e2f3a4b5-6c7d-4e8f-9a0b-1c2d3e4f5a6b', 'Queijo Minas', 'Queijo Minas frescal em fatias.', 19.50, TRUE),
-  ('f3e4d5c6-7b8a-4c9d-0e1f-2a3b4c5d6e7f', 'Geleia de Morango', 'Geleia artesanal de morango.', 12.00, TRUE),
-  ('a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d', 'Suco de Laranja', 'Suco natural de laranja 1L.', 9.80, TRUE),
-  ('b2c3d4e5-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Maçã Fuji', 'Maçã Fuji fresca, unidade.', 4.20, TRUE);
+  ('Café Premium', 'Café gourmet em grãos, torra média.', 28.90, 20),
+  ('Pão Francês', 'Pão macio e crocante, feito na hora.', 3.50, 50),
+  ('Croissant', 'Croissant amanteigado com leve toque doce.', 7.90, 30),
+  ('Leite Integral', 'Leite fresco integral 1L.', 6.20, 25),
+  ('Queijo Minas', 'Queijo Minas frescal em fatias.', 19.50, 15),
+  ('Geleia de Morango', 'Geleia artesanal de morango.', 12.00, 18),
+  ('Suco de Laranja', 'Suco natural de laranja 1L.', 9.80, 25),
+  ('Maçã Fuji', 'Maçã Fuji fresca, unidade.', 4.20, 40);
 
--- 3. Inserir cestas já criadas
-INSERT INTO cestas (id, nome, descricao, preco, ativa)
+INSERT INTO cestas (titulo, descricao, preco, total_itens)
 VALUES
-  ('c1e2d3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'Cesta Clássica', 'Cesta com itens básicos para café da manhã.', 75.00, TRUE),
-  ('d2f3e4a5-6b7c-4d8e-9f0a-1b2c3d4e5f6a', 'Cesta Premium', 'Cesta premium com itens gourmets selecionados.', 135.00, TRUE);
+  ('Cesta Clássica', 'Cesta com itens básicos para café da manhã.', 75.00, 4),
+  ('Cesta Premium', 'Cesta premium com itens gourmets selecionados.', 135.00, 5);
 
--- 4. Associar produtos às cestas
-INSERT INTO cesta_itens (id, cesta_id, produto_id, quantidade)
-VALUES
-  ('f1e2d3c4-5b6a-4c7d-8e9f-0a1b2c3d4e5f', 'c1e2d3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'a5d8c6a2-94b5-4f5d-a1f3-0fcbdf6a8b1d', 1),
-  ('e1d2c3b4-5a6f-4e7d-8c9b-0a1e2d3c4b5f', 'c1e2d3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'b9a8a8f1-2f12-4f1f-8e9d-5a9e03d2a5f1', 2),
-  ('d1c2b3a4-5f6e-4d7c-8b9a-0e1d2c3b4a5f', 'd2f3e4a5-6b7c-4d8e-9f0a-1b2c3d4e5f6a', 'a5d8c6a2-94b5-4f5d-a1f3-0fcbdf6a8b1d', 1),
-  ('c1b2a3d4-5e6f-4d7c-8b9a-0f1e2d3c4b5a', 'd2f3e4a5-6b7c-4d8e-9f0a-1b2c3d4e5f6a', 'c6b7e4d2-3f8a-4b1d-8c1a-49e2d6f7a0c1', 2),
-  ('b1a2c3d4-5e6f-4d7c-8b9a-0f1e2d3c4b5c', 'd2f3e4a5-6b7c-4d8e-9f0a-1b2c3d4e5f6a', 'f3e4d5c6-7b8a-4c9d-0e1f-2a3b4c5d6e7f', 1);
+INSERT INTO cesta_itens (cesta_id, item_id)
+SELECT c.id, i.id
+FROM cestas c
+JOIN itens i ON i.titulo IN ('Café Premium', 'Pão Francês', 'Leite Integral', 'Maçã Fuji')
+WHERE c.titulo = 'Cesta Clássica'
+ON CONFLICT DO NOTHING;
 
--- 5. Exemplo de pedidos e itens de pedidos (opcional)
-INSERT INTO pedidos (id, nome_cliente, status, valor_total)
-VALUES
-  ('p1a2b3c4-5d6e-4f7a-8b9c-0d1e2f3a4b5c', 'Juliana Santos', 'pendente', 160.40),
-  ('p2b3c4d5-6e7f-4a8b-9c0d-1e2f3a4b5c6d', 'Lucas Ferreira', 'confirmado', 92.30);
+INSERT INTO cesta_itens (cesta_id, item_id)
+SELECT c.id, i.id
+FROM cestas c
+JOIN itens i ON i.titulo IN ('Café Premium', 'Croissant', 'Suco de Laranja', 'Queijo Minas', 'Geleia de Morango')
+WHERE c.titulo = 'Cesta Premium'
+ON CONFLICT DO NOTHING;
 
-INSERT INTO pedido_itens (id, pedido_id, produto_id, quantidade, preco_unitario)
-VALUES
-  ('q1w2e3r4-5t6y-7u8i-9o0p-1a2s3d4f5g6', 'p1a2b3c4-5d6e-4f7a-8b9c-0d1e2f3a4b5c', 'a5d8c6a2-94b5-4f5d-a1f3-0fcbdf6a8b1d', 1, 28.90),
-  ('w1e2r3t4-5y6u-7i8o-9p0a-1s2d3f4g5h6', 'p1a2b3c4-5d6e-4f7a-8b9c-0d1e2f3a4b5c', 'b9a8a8f1-2f12-4f1f-8e9d-5a9e03d2a5f1', 3, 3.50),
-  ('e1r2t3y4-5u6i-7o8p-9a0s-1d2f3g4h5j6', 'p2b3c4d5-6e7f-4a8b-9c0d-1e2f3a4b5c6d', 'c6b7e4d2-3f8a-4b1d-8c1a-49e2d6f7a0c1', 2, 7.90),
-  ('r1t2y3u4-5i6o-7p8a-9s0d-1f2g3h4j5k6', 'p2b3c4d5-6e7f-4a8b-9c0d-1e2f3a4b5c6d', 'b9a8a8f1-2f12-4f1f-8e9d-5a9e03d2a5f1', 4, 3.50);
+INSERT INTO carrinhos (cesta_id)
+SELECT id FROM cestas WHERE titulo = 'Cesta Clássica' LIMIT 1;
 
--- 6. Consulta para verificar produtos
-SELECT *
-FROM produtos
-ORDER BY nome;
+INSERT INTO carrinho_itens_adicionais (carrinho_id, item_id, quantidade)
+SELECT carrinhos.id, itens.id, 2
+FROM carrinhos
+JOIN itens ON itens.titulo = 'Croissant'
+ORDER BY carrinhos.id DESC
+LIMIT 1;
 
--- 7. Consulta de produtos dentro de cestas
+INSERT INTO vendas_cestas (
+  cesta_id,
+  carrinho_id,
+  cliente_nome,
+  cliente_telefone,
+  endereco_entrega,
+  observacoes,
+  status,
+  preco_pago,
+  pago
+)
 SELECT
-  p.id AS produto_id,
-  p.nome AS produto,
-  p.preco,
-  ci.quantidade,
-  c.id AS cesta_id,
-  c.nome AS cesta_nome
-FROM cesta_itens ci
-INNER JOIN produtos p ON ci.produto_id = p.id
-INNER JOIN cestas c ON ci.cesta_id = c.id
-ORDER BY c.nome, p.nome;
+  c.id,
+  ca.id,
+  'Juliana Santos',
+  '(11) 99999-9999',
+  'Rua das Flores, 120 - Centro',
+  'Entregar pela manhã',
+  'pendente',
+  c.preco,
+  FALSE
+FROM cestas c
+LEFT JOIN carrinhos ca ON ca.cesta_id = c.id
+WHERE c.titulo = 'Cesta Clássica'
+ORDER BY ca.id DESC
+LIMIT 1;
+
+SELECT * FROM itens ORDER BY titulo;
+SELECT * FROM cestas ORDER BY titulo;
+SELECT * FROM cesta_itens ORDER BY cesta_id, item_id;
+SELECT * FROM carrinhos ORDER BY criado_em DESC;
+SELECT * FROM vendas_cestas ORDER BY data_venda DESC;

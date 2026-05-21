@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get("/", (_req, res) => {
   return res.json({
-    servico: "Back-end de pedidos de cestas de café da manhã",
+    servico: "Back-end de carrinhos e vendas",
     status: "online"
   });
 });

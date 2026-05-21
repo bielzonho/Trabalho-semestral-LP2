@@ -1,7 +1,7 @@
 {
   "name": "pedidos",
   "version": "1.0.0",
-  "description": "Microsserviço de pedidos do app de cestas de café da manhã",
+  "description": "Microserviço de carrinhos e vendas de cestas",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -12,8 +12,7 @@
     "@supabase/supabase-js": "^2.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.21.2",
-    "uuid": "^11.1.0"
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

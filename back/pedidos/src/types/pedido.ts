@@ -19,6 +19,9 @@ export interface Pedido {
   id: string;
   cestaId: string | null;
   clienteNome: string;
+  clienteTelefone?: string;
+  telefone?: string;
+  enderecoEntrega?: string;
   status: StatusPedido;
   valorTotal: number;
   observacoes?: string;

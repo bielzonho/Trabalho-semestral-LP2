@@ -4,7 +4,8 @@
   "scripts": {
     "install:services": "npm --prefix back/produtos install && npm --prefix back/catalogo-cestas install && npm --prefix back/pedidos install",
     "dev": "concurrently \"npm --prefix back/produtos run dev\" \"npm --prefix back/catalogo-cestas run dev\" \"npm --prefix back/pedidos run dev\"",
-    "generate-config": "node scripts/generate-supabase-config.js"
+    "generate-config": "node scripts/generate-supabase-config.js",
+    "seed:db": "powershell -ExecutionPolicy Bypass -File scripts/popular-tabelas.ps1"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

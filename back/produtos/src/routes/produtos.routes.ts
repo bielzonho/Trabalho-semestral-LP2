@@ -4,24 +4,27 @@ import { Produto } from "../types/produto";
 
 const router = Router();
 
-type ProdutoRow = {
+type ItemRow = {
   id: string | number;
-  nome: string;
-  descricao: string;
+  titulo: string;
+  descricao: string | null;
   preco: number;
-  ativo: boolean;
-  criado_em?: string;
-  created_at?: string;
+  quantidade_estoque?: number;
+  quantidade_vendas?: number;
 };
 
-function mapProduto(row: ProdutoRow): Produto {
+function mapProduto(row: ItemRow): Produto & { quantidadeEstoque: number; quantidadeVendas: number } {
+  const quantidadeEstoque = Number(row.quantidade_estoque ?? 0);
+
   return {
     id: String(row.id),
-    nome: row.nome,
-    descricao: row.descricao,
+    nome: row.titulo,
+    descricao: row.descricao || "",
     preco: Number(row.preco),
-    ativo: row.ativo,
-    criadoEm: row.criado_em || row.created_at || ""
+    ativo: quantidadeEstoque > 0,
+    criadoEm: "",
+    quantidadeEstoque,
+    quantidadeVendas: Number(row.quantidade_vendas ?? 0)
   };
 }
 
@@ -34,115 +37,109 @@ function handleSupabaseError(res: Response, error: { message: string }) {
 
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
-    .from("produtos")
+    .from("itens")
     .select("*")
-    .order("nome", { ascending: true });
+    .order("titulo", { ascending: true });
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
-  return res.status(200).json((data || []).map(mapProduto));
+  return res.status(200).json(((data || []) as ItemRow[]).map(mapProduto));
 });
 
 router.get("/ativos", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
-    .from("produtos")
+    .from("itens")
     .select("*")
-    .eq("ativo", true)
-    .order("nome", { ascending: true });
+    .gt("quantidade_estoque", 0)
+    .order("titulo", { ascending: true });
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
-  return res.status(200).json((data || []).map(mapProduto));
+  return res.status(200).json(((data || []) as ItemRow[]).map(mapProduto));
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-
   const { data, error } = await supabase
-    .from("produtos")
+    .from("itens")
     .select("*")
-    .eq("id", id)
+    .eq("id", req.params.id)
     .maybeSingle();
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
   if (!data) {
     return res.status(404).json({ mensagem: "Produto não encontrado." });
   }
 
-  return res.status(200).json(mapProduto(data));
+  return res.status(200).json(mapProduto(data as ItemRow));
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  const { nome, descricao, preco, ativo } = req.body;
+  const { nome, descricao, preco, ativo, quantidadeEstoque } = req.body;
 
-  if (!nome || !descricao || preco === undefined || ativo === undefined) {
+  if (!nome || preco === undefined) {
     return res.status(400).json({
-      mensagem: "Campos obrigatórios: nome, descricao, preco, ativo."
+      mensagem: "Campos obrigatórios: nome, preco."
     });
   }
 
+  const estoque =
+    quantidadeEstoque !== undefined ? quantidadeEstoque : ativo === false ? 0 : 1;
+
   const { data, error } = await supabase
-    .from("produtos")
-    .insert({ nome, descricao, preco, ativo })
+    .from("itens")
+    .insert({
+      titulo: nome,
+      descricao,
+      preco,
+      quantidade_estoque: estoque
+    })
     .select("*")
     .single();
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
-  return res.status(201).json(mapProduto(data));
+  return res.status(201).json(mapProduto(data as ItemRow));
 });
 
 router.put("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { nome, descricao, preco, ativo } = req.body;
+  const { nome, descricao, preco, ativo, quantidadeEstoque } = req.body;
 
   const payload = {
-    ...(nome !== undefined && { nome }),
+    ...(nome !== undefined && { titulo: nome }),
     ...(descricao !== undefined && { descricao }),
     ...(preco !== undefined && { preco }),
-    ...(ativo !== undefined && { ativo })
+    ...(quantidadeEstoque !== undefined && { quantidade_estoque: quantidadeEstoque }),
+    ...(ativo !== undefined && quantidadeEstoque === undefined && {
+      quantidade_estoque: ativo ? 1 : 0
+    })
   };
 
   const { data, error } = await supabase
-    .from("produtos")
+    .from("itens")
     .update(payload)
-    .eq("id", id)
+    .eq("id", req.params.id)
     .select("*")
     .maybeSingle();
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
   if (!data) {
     return res.status(404).json({ mensagem: "Produto não encontrado." });
   }
 
-  return res.status(200).json(mapProduto(data));
+  return res.status(200).json(mapProduto(data as ItemRow));
 });
 
 router.delete("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-
   const { data, error } = await supabase
-    .from("produtos")
+    .from("itens")
     .delete()
-    .eq("id", id)
+    .eq("id", req.params.id)
     .select("id")
     .maybeSingle();
 
-  if (error) {
-    return handleSupabaseError(res, error);
-  }
+  if (error) return handleSupabaseError(res, error);
 
   if (!data) {
     return res.status(404).json({ mensagem: "Produto não encontrado." });

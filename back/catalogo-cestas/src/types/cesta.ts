@@ -11,6 +11,7 @@ export interface Cesta {
   nome: string;
   descricao: string;
   precoBase: number;
+  preco?: number;
   ativa: boolean;
   criadoEm: string;
   itens?: CestaItem[];
