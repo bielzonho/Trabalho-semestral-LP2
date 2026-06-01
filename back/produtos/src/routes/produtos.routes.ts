@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../database";
 import { Produto } from "../types/produto";
+import { requireAuth } from "../middleware/auth.middleware";
+import { requireRole } from "../middleware/roles.middleware";
 
 const router = Router();
 
@@ -35,6 +37,7 @@ function handleSupabaseError(res: Response, error: { message: string }) {
   });
 }
 
+// GET /produtos — público
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("itens")
@@ -46,6 +49,7 @@ router.get("/", async (_req: Request, res: Response) => {
   return res.status(200).json(((data || []) as ItemRow[]).map(mapProduto));
 });
 
+// GET /produtos/ativos — público
 router.get("/ativos", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("itens")
@@ -58,6 +62,7 @@ router.get("/ativos", async (_req: Request, res: Response) => {
   return res.status(200).json(((data || []) as ItemRow[]).map(mapProduto));
 });
 
+// GET /produtos/:id — público
 router.get("/:id", async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("itens")
@@ -74,7 +79,8 @@ router.get("/:id", async (req: Request, res: Response) => {
   return res.status(200).json(mapProduto(data as ItemRow));
 });
 
-router.post("/", async (req: Request, res: Response) => {
+// POST /produtos — somente admin
+router.post("/", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { nome, descricao, preco, ativo, quantidadeEstoque } = req.body;
 
   if (!nome || preco === undefined) {
@@ -102,7 +108,8 @@ router.post("/", async (req: Request, res: Response) => {
   return res.status(201).json(mapProduto(data as ItemRow));
 });
 
-router.put("/:id", async (req: Request, res: Response) => {
+// PUT /produtos/:id — somente admin
+router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { nome, descricao, preco, ativo, quantidadeEstoque } = req.body;
 
   const payload = {
@@ -131,7 +138,8 @@ router.put("/:id", async (req: Request, res: Response) => {
   return res.status(200).json(mapProduto(data as ItemRow));
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+// DELETE /produtos/:id — somente admin
+router.delete("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("itens")
     .delete()

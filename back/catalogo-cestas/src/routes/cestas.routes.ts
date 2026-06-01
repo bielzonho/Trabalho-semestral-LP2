@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../database";
 import { Cesta, CestaItem } from "../types/cesta";
+import { requireAuth } from "../middleware/auth.middleware";
+import { requireRole } from "../middleware/roles.middleware";
 
 const router = Router();
 
@@ -110,6 +112,7 @@ async function atualizarTotalItens(cestaId: string) {
   if (updateError) throw updateError;
 }
 
+// GET /cestas — público
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("cestas")
@@ -129,6 +132,7 @@ router.get("/", async (_req: Request, res: Response) => {
   }
 });
 
+// GET /cestas/ativas — público
 router.get("/ativas", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("cestas")
@@ -148,6 +152,7 @@ router.get("/ativas", async (_req: Request, res: Response) => {
   }
 });
 
+// GET /cestas/:id — público
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const cesta = await buscarCestaComItens(String(req.params.id));
@@ -158,7 +163,8 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/", async (req: Request, res: Response) => {
+// POST /cestas — somente admin
+router.post("/", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { nome, descricao, precoBase, preco, itens } = req.body;
   const precoFinal = precoBase ?? preco;
 
@@ -197,7 +203,8 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-router.put("/:id", async (req: Request, res: Response) => {
+// PUT /cestas/:id — somente admin
+router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { nome, descricao, precoBase, preco, itens } = req.body;
   const precoFinal = precoBase ?? preco;
@@ -241,7 +248,8 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/:id/itens", async (req: Request, res: Response) => {
+// POST /cestas/:id/itens — somente admin
+router.post("/:id/itens", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { produtoId } = req.body;
 
@@ -263,7 +271,8 @@ router.post("/:id/itens", async (req: Request, res: Response) => {
   }
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+// DELETE /cestas/:id — somente admin
+router.delete("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("cestas")
     .delete()
@@ -277,7 +286,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
   return res.status(200).json({ mensagem: "Cesta removida com sucesso." });
 });
 
-router.delete("/:cestaId/itens/:itemId", async (req: Request, res: Response) => {
+// DELETE /cestas/:cestaId/itens/:itemId — somente admin
+router.delete("/:cestaId/itens/:itemId", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { cestaId, itemId } = req.params;
 
   const { data, error } = await supabase

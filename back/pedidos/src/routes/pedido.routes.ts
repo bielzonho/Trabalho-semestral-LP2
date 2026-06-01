@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../database";
 import { Pedido, PedidoItem, StatusPedido } from "../types/pedido";
+import { requireAuth } from "../middleware/auth.middleware";
+import { requireRole } from "../middleware/roles.middleware";
 
 const router = Router();
 
@@ -117,7 +119,8 @@ async function buscarPedido(id: string) {
   return mapPedido(venda, itens);
 }
 
-router.get("/", async (_req: Request, res: Response) => {
+// GET /pedidos — somente admin
+router.get("/", requireAuth, requireRole("admin"), async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("vendas_cestas")
     .select("*")
@@ -128,7 +131,8 @@ router.get("/", async (_req: Request, res: Response) => {
   return res.status(200).json(((data || []) as VendaCestaRow[]).map((row) => mapPedido(row)));
 });
 
-router.get("/status/:status", async (req: Request, res: Response) => {
+// GET /pedidos/status/:status — somente admin
+router.get("/status/:status", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const status = req.params.status as StatusPedido;
   const pago = status === "confirmado" || status === "entregue";
 
@@ -143,7 +147,8 @@ router.get("/status/:status", async (req: Request, res: Response) => {
   return res.status(200).json(((data || []) as VendaCestaRow[]).map((row) => mapPedido(row)));
 });
 
-router.get("/:id", async (req: Request, res: Response) => {
+// GET /pedidos/:id — somente admin
+router.get("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const pedido = await buscarPedido(String(req.params.id));
     if (!pedido) return res.status(404).json({ mensagem: "Pedido não encontrado." });
@@ -153,7 +158,8 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/", async (req: Request, res: Response) => {
+// POST /pedidos — cliente ou admin
+router.post("/", requireAuth, requireRole("cliente"), async (req: Request, res: Response) => {
   const {
     cestaId,
     valorTotal,
@@ -199,7 +205,7 @@ router.post("/", async (req: Request, res: Response) => {
     .insert({
       cesta_id: cestaId,
       carrinho_id: carrinho.id,
-      cliente_nome: clienteNome || "Cliente",
+      cliente_nome: clienteNome || req.usuario?.nome || "Cliente",
       cliente_telefone: clienteTelefone || telefone || null,
       endereco_entrega: enderecoEntrega || null,
       observacoes: observacoes || null,
@@ -216,7 +222,8 @@ router.post("/", async (req: Request, res: Response) => {
   return res.status(201).json(mapPedido(venda as VendaCestaRow, itensCarrinho));
 });
 
-router.put("/:id", async (req: Request, res: Response) => {
+// PUT /pedidos/:id — somente admin
+router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const {
     cestaId,
     valorTotal,
@@ -256,7 +263,8 @@ router.put("/:id", async (req: Request, res: Response) => {
   return res.status(200).json(mapPedido(data as VendaCestaRow));
 });
 
-router.patch("/:id/status", async (req: Request, res: Response) => {
+// PATCH /pedidos/:id/status — somente admin
+router.patch("/:id/status", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { status } = req.body as { status: StatusPedido };
   const pago = status === "confirmado" || status === "entregue";
 
@@ -273,13 +281,14 @@ router.patch("/:id/status", async (req: Request, res: Response) => {
   return res.status(200).json(mapPedido(data as VendaCestaRow));
 });
 
-router.post("/:id/itens", async (_req: Request, res: Response) => {
+router.post("/:id/itens", (_req: Request, res: Response) => {
   return res.status(400).json({
     mensagem: "No novo modelo, itens adicionais pertencem ao carrinho criado junto com o pedido."
   });
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+// DELETE /pedidos/:id — somente admin
+router.delete("/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("vendas_cestas")
     .delete()
@@ -293,7 +302,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
   return res.status(200).json({ mensagem: "Pedido removido com sucesso." });
 });
 
-router.delete("/:pedidoId/itens/:itemId", async (_req: Request, res: Response) => {
+router.delete("/:pedidoId/itens/:itemId", (_req: Request, res: Response) => {
   return res.status(400).json({
     mensagem: "No novo modelo, remova itens diretamente do carrinho correspondente."
   });
