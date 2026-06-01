@@ -2,20 +2,117 @@
 const API_PRODUTOS = "http://localhost:3012/produtos";
 const API_CESTAS = "http://localhost:3010/cestas";
 const API_PEDIDOS = "http://localhost:3011/pedidos";
+const API_AUTH = "http://localhost:3013/auth";
 
-// Funções utilitárias
+// ============================================================
+// AUTENTICAÇÃO
+// ============================================================
+
+async function fazerLogin(email, senha) {
+  const resposta = await fetch(`${API_AUTH}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, senha })
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.mensagem || "Credenciais inválidas.");
+  }
+
+  return dados;
+}
+
+function obterUsuarioLogado() {
+  const dados = localStorage.getItem("usuario");
+  return dados ? JSON.parse(dados) : null;
+}
+
+function estaLogado() {
+  return !!localStorage.getItem("token");
+}
+
+function eAdmin() {
+  const usuario = obterUsuarioLogado();
+  return usuario?.perfil === "admin";
+}
+
+function fazerLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+  window.location.href = "login.html";
+}
+
+// ============================================================
+// UTILITÁRIO DE REQUISIÇÕES
+// ============================================================
+
 async function fetchAPI(url, options = {}) {
+  const token = localStorage.getItem("token");
+
   try {
     const resposta = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        ...options.headers
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(options.headers || {})
       },
-      ...options
+      ...options,
+      headers: undefined
     });
 
+    if (resposta.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (resposta.status === 403) {
+      throw new Error("Você não tem permissão para realizar esta ação.");
+    }
+
     if (!resposta.ok) {
-      throw new Error(`HTTP ${resposta.status}: ${resposta.statusText}`);
+      const corpo = await resposta.json().catch(() => ({}));
+      throw new Error(corpo.mensagem || `HTTP ${resposta.status}: ${resposta.statusText}`);
+    }
+
+    return await resposta.json();
+  } catch (erro) {
+    console.error("Erro na requisição:", erro);
+    throw erro;
+  }
+}
+
+// Versão corrigida do fetchAPI que monta os headers corretamente
+async function fetchComAuth(url, options = {}) {
+  const token = localStorage.getItem("token");
+  const headersBase = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  try {
+    const resposta = await fetch(url, {
+      ...options,
+      headers: { ...headersBase, ...(options.headers || {}) }
+    });
+
+    if (resposta.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (resposta.status === 403) {
+      throw new Error("Você não tem permissão para realizar esta ação.");
+    }
+
+    if (!resposta.ok) {
+      const corpo = await resposta.json().catch(() => ({}));
+      throw new Error(corpo.mensagem || `HTTP ${resposta.status}: ${resposta.statusText}`);
     }
 
     return await resposta.json();
@@ -31,8 +128,7 @@ async function fetchAPI(url, options = {}) {
 
 async function carregarProdutos() {
   try {
-    const produtos = await fetchAPI(API_PRODUTOS);
-    return produtos;
+    return await fetchComAuth(API_PRODUTOS);
   } catch (erro) {
     console.error("Erro ao carregar produtos:", erro);
     return [];
@@ -41,8 +137,7 @@ async function carregarProdutos() {
 
 async function obterProduto(id) {
   try {
-    const produto = await fetchAPI(`${API_PRODUTOS}/${id}`);
-    return produto;
+    return await fetchComAuth(`${API_PRODUTOS}/${id}`);
   } catch (erro) {
     console.error("Erro ao obter produto:", erro);
     return null;
@@ -50,41 +145,23 @@ async function obterProduto(id) {
 }
 
 async function criarProduto(dados) {
-  try {
-    const produto = await fetchAPI(API_PRODUTOS, {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-    return produto;
-  } catch (erro) {
-    console.error("Erro ao criar produto:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(API_PRODUTOS, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function atualizarProduto(id, dados) {
-  try {
-    const produto = await fetchAPI(`${API_PRODUTOS}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(dados)
-    });
-    return produto;
-  } catch (erro) {
-    console.error("Erro ao atualizar produto:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PRODUTOS}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function deletarProduto(id) {
-  try {
-    const resultado = await fetchAPI(`${API_PRODUTOS}/${id}`, {
-      method: "DELETE"
-    });
-    return resultado;
-  } catch (erro) {
-    console.error("Erro ao deletar produto:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PRODUTOS}/${id}`, {
+    method: "DELETE"
+  });
 }
 
 // ============================================================
@@ -93,8 +170,7 @@ async function deletarProduto(id) {
 
 async function carregarCestas() {
   try {
-    const cestas = await fetchAPI(API_CESTAS);
-    return cestas;
+    return await fetchComAuth(API_CESTAS);
   } catch (erro) {
     console.error("Erro ao carregar cestas:", erro);
     return [];
@@ -103,8 +179,7 @@ async function carregarCestas() {
 
 async function obterCesta(id) {
   try {
-    const cesta = await fetchAPI(`${API_CESTAS}/${id}`);
-    return cesta;
+    return await fetchComAuth(`${API_CESTAS}/${id}`);
   } catch (erro) {
     console.error("Erro ao obter cesta:", erro);
     return null;
@@ -112,66 +187,36 @@ async function obterCesta(id) {
 }
 
 async function criarCesta(dados) {
-  try {
-    const cesta = await fetchAPI(API_CESTAS, {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-    return cesta;
-  } catch (erro) {
-    console.error("Erro ao criar cesta:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(API_CESTAS, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function atualizarCesta(id, dados) {
-  try {
-    const cesta = await fetchAPI(`${API_CESTAS}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(dados)
-    });
-    return cesta;
-  } catch (erro) {
-    console.error("Erro ao atualizar cesta:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_CESTAS}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function adicionarItemCesta(cestaId, dados) {
-  try {
-    const cesta = await fetchAPI(`${API_CESTAS}/${cestaId}/itens`, {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-    return cesta;
-  } catch (erro) {
-    console.error("Erro ao adicionar item à cesta:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_CESTAS}/${cestaId}/itens`, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function removerItemCesta(cestaId, itemId) {
-  try {
-    const resultado = await fetchAPI(`${API_CESTAS}/${cestaId}/itens/${itemId}`, {
-      method: "DELETE"
-    });
-    return resultado;
-  } catch (erro) {
-    console.error("Erro ao remover item da cesta:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_CESTAS}/${cestaId}/itens/${itemId}`, {
+    method: "DELETE"
+  });
 }
 
 async function deletarCesta(id) {
-  try {
-    const resultado = await fetchAPI(`${API_CESTAS}/${id}`, {
-      method: "DELETE"
-    });
-    return resultado;
-  } catch (erro) {
-    console.error("Erro ao deletar cesta:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_CESTAS}/${id}`, {
+    method: "DELETE"
+  });
 }
 
 // ============================================================
@@ -180,8 +225,7 @@ async function deletarCesta(id) {
 
 async function carregarPedidos() {
   try {
-    const pedidos = await fetchAPI(API_PEDIDOS);
-    return pedidos;
+    return await fetchComAuth(API_PEDIDOS);
   } catch (erro) {
     console.error("Erro ao carregar pedidos:", erro);
     return [];
@@ -190,8 +234,7 @@ async function carregarPedidos() {
 
 async function obterPedido(id) {
   try {
-    const pedido = await fetchAPI(`${API_PEDIDOS}/${id}`);
-    return pedido;
+    return await fetchComAuth(`${API_PEDIDOS}/${id}`);
   } catch (erro) {
     console.error("Erro ao obter pedido:", erro);
     return null;
@@ -199,79 +242,43 @@ async function obterPedido(id) {
 }
 
 async function criarPedido(dados) {
-  try {
-    const pedido = await fetchAPI(API_PEDIDOS, {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-    return pedido;
-  } catch (erro) {
-    console.error("Erro ao criar pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(API_PEDIDOS, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function atualizarPedido(id, dados) {
-  try {
-    const pedido = await fetchAPI(`${API_PEDIDOS}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(dados)
-    });
-    return pedido;
-  } catch (erro) {
-    console.error("Erro ao atualizar pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PEDIDOS}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function atualizarStatusPedido(id, status) {
-  try {
-    const pedido = await fetchAPI(`${API_PEDIDOS}/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status })
-    });
-    return pedido;
-  } catch (erro) {
-    console.error("Erro ao atualizar status do pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PEDIDOS}/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
 }
 
 async function adicionarItemPedido(pedidoId, dados) {
-  try {
-    const pedido = await fetchAPI(`${API_PEDIDOS}/${pedidoId}/itens`, {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-    return pedido;
-  } catch (erro) {
-    console.error("Erro ao adicionar item ao pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PEDIDOS}/${pedidoId}/itens`, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  });
 }
 
 async function removerItemPedido(pedidoId, itemId) {
-  try {
-    const resultado = await fetchAPI(`${API_PEDIDOS}/${pedidoId}/itens/${itemId}`, {
-      method: "DELETE"
-    });
-    return resultado;
-  } catch (erro) {
-    console.error("Erro ao remover item do pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PEDIDOS}/${pedidoId}/itens/${itemId}`, {
+    method: "DELETE"
+  });
 }
 
 async function deletarPedido(id) {
-  try {
-    const resultado = await fetchAPI(`${API_PEDIDOS}/${id}`, {
-      method: "DELETE"
-    });
-    return resultado;
-  } catch (erro) {
-    console.error("Erro ao deletar pedido:", erro);
-    throw erro;
-  }
+  return await fetchComAuth(`${API_PEDIDOS}/${id}`, {
+    method: "DELETE"
+  });
 }
 
 // ============================================================

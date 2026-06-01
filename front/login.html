@@ -4,303 +4,211 @@
   <meta charset="UTF-8">
   <title>Login - Grão & Cesta</title>
   <style>
-    /* Reset básico para evitar repetições visuais */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f8f6f3;
+    :root {
+      --bg: #e6bb84;
+      --card: #fff8f0;
+      --gold: #c59d5f;
+      --text: #3a2a1a;
+      --muted: #7a6a5a;
+      --border: #d4b896;
+      --shadow: rgba(100,60,20,0.12);
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--bg);
     }
 
-    /* MENU */
     header {
-      background-color: #fff;
-      padding: 15px 40px;
+      background: var(--card);
+      padding: 14px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #ddd;
-      flex-shrink: 0; /* Impede o header de encolher */
+      border-bottom: 2px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow);
     }
 
-    header h1 { margin: 0; font-size: 22px; }
+    header h1 { font-size: 22px; color: var(--text); }
 
     nav a {
       margin-left: 20px;
       text-decoration: none;
-      color: #333;
-      font-weight: bold;
+      color: var(--muted);
+      font-weight: 600;
     }
+    nav a:hover { color: var(--gold); }
 
-    /* AREA CENTRAL */
     .login-container {
-      flex: 1; /* Ocupa todo o espaço restante da tela */
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 40px 20px;
     }
 
     .login-card {
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background: var(--card);
+      padding: 44px 40px;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px var(--shadow);
       width: 100%;
-      max-width: 350px;
+      max-width: 380px;
       text-align: center;
     }
 
-    .login-card h2 { margin-bottom: 25px; color: #333; }
+    .login-card h2 {
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 24px;
+    }
 
-    .form-group { margin-bottom: 15px; text-align: left; }
+    .login-card p.subtitulo {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
 
-    .form-group label { display: block; margin-bottom: 5px; color: #666; }
-
+    .form-group { margin-bottom: 18px; text-align: left; }
+    .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
     .form-group input {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.2s;
     }
+    .form-group input:focus { outline: none; border-color: var(--gold); }
 
     .btn-entrar {
       width: 100%;
-      padding: 12px;
-      background-color: #c59d5f;
+      padding: 13px;
+      background: var(--gold);
       border: none;
-      border-radius: 4px;
-      color: white;
-      font-weight: bold;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
     }
+    .btn-entrar:hover { background: #b08840; }
+    .btn-entrar:disabled { background: #ccc; cursor: not-allowed; }
+
+    .erro {
+      color: #b00;
+      background: #fff0f0;
+      border: 1px solid #f5c6c6;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .dica {
+      margin-top: 22px;
+      padding: 14px;
+      background: #fdf5e6;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: left;
+    }
+    .dica p { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .dica code { font-size: 12px; color: var(--text); background: #ede3d3; padding: 2px 6px; border-radius: 4px; display: block; margin-bottom: 4px; }
   </style>
 </head>
 <body>
 
   <header>
     <h1>Grão & Cesta</h1>
-    <nav id="navUsuario">
+    <nav>
       <a href="index.html">Home</a>
-      <a href="login.html" style="color: #c59d5f;">Login</a>
+      <a href="login.html" style="color: var(--gold);">Login</a>
     </nav>
   </header>
 
   <div class="login-container">
     <div class="login-card">
       <h2>Acessar Conta</h2>
+      <p class="subtitulo">Grão & Cesta — Gestão de cestas e pedidos</p>
+
+      <div id="msgErro" class="erro"></div>
+
       <form id="loginForm">
         <div class="form-group">
-          <label>Nome de usuário</label>
-          <input type="text" name="nomeUsuario" required placeholder="" />
-        </div>
-        <div class="form-group">
           <label>E-mail</label>
-          <input type="email" name="email" required placeholder="exemplo@email.com">
+          <input type="email" id="email" required placeholder="seu@email.com" autocomplete="email">
         </div>
         <div class="form-group">
           <label>Senha</label>
-          <input type="password" name="senha" required placeholder="******">
+          <input type="password" id="senha" required placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-entrar">ENTRAR</button>
-        <button id="btnModo" class="btn-entrar" style="margin-top:8px; background: #eee; color:#333;">Já possui conta? Entrar</button>
+        <button type="submit" class="btn-entrar" id="btnEntrar">ENTRAR</button>
       </form>
+
+      <div class="dica">
+        <p>Contas disponíveis para teste:</p>
+        <code>admin@email.com / admin123</code>
+        <code>cliente@email.com / cliente123</code>
+      </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-
   <script>
-    // ✅ forma correta no modo global
-    const supabaseClient = window.supabase.createClient(
-      window.SUPABASE_URL,
-      window.SUPABASE_KEY
-    );
+    const API_AUTH = "http://localhost:3013/auth";
 
-    let modoCadastro = false;
-
-    function atualizarModo() {
-      const titulo = document.querySelector('.login-card h2');
-      const btnAlternar = document.getElementById('btnModo');
-      const nomeField = document.querySelector('input[name="nomeUsuario"]');
-
-      if (modoCadastro) {
-        titulo.textContent = 'Criar conta';
-        btnAlternar.textContent = 'Já possui conta? Entrar';
-        nomeField.parentElement.style.display = 'block';
-        nomeField.required = true;
-      } else {
-        titulo.textContent = 'Acessar Conta';
-        btnAlternar.textContent = 'Ainda não tem conta? Cadastre-se';
-        nomeField.parentElement.style.display = 'none';
-        nomeField.required = false;
-      }
-    }
-
-    async function hashSenha(senha) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(senha);
-      const digest = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(digest))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    }
-
-    async function verificarEmailExistente(email) {
-      const { data, error } = await supabaseClient
-        .from('users')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      return data !== null;
-    }
-
-    async function verificarNomeUsuarioExistente(nomeUsuario) {
-      const { data, error } = await supabaseClient
-        .from('users')
-        .select('name')
-        .eq('name', nomeUsuario)
-        .single();
-
-      return data !== null;
-    }
-
-    async function salvarUsuarioSupabase(nomeUsuario, email, senha) {
-      const senhaHash = await hashSenha(senha);
-
-      const { data, error } = await supabaseClient
-        .from('users')
-        .insert([{ name: nomeUsuario, email, password: senhaHash }]);
-
-      return { data, error };
-    }
-
-    async function logarUsuarioSupabase(email, senha) {
-      const senhaHash = await hashSenha(senha);
-
-      const { data, error } = await supabaseClient
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (error || !data) {
-        throw new Error('Conta não encontrada.');
-      }
-
-      if (data.password !== senhaHash) {
-        throw new Error('E-mail ou senha inválidos.');
-      }
-
-      return data;
-    }
-
-    function exibirUsuario() {
-      const nav = document.getElementById('navUsuario');
-      const nomeUsuario = localStorage.getItem('nomeUsuario');
-
-      if (nomeUsuario) {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <span style="margin-left:16px;font-weight:700;color:#444;">${nomeUsuario}</span>
-          <button id="btnLogout" class="btn-entrar" style="margin-left:12px;">Sair</button>
-        `;
-
-        document.getElementById('btnLogout').addEventListener('click', () => {
-          localStorage.removeItem('nomeUsuario');
-          localStorage.removeItem('emailUsuario');
-          window.location.href = 'index.html';
-        });
-      } else {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <a href="login.html" style="color: #c59d5f;">Login</a>
-        `;
-      }
-    }
-
-    document.getElementById('loginForm').onsubmit = async (e) => {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const nomeUsuario = document.querySelector('input[name="nomeUsuario"]').value.trim();
-      const email = document.querySelector('input[name="email"]').value.trim();
-      const senha = document.querySelector('input[name="senha"]').value;
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value;
+      const msgErro = document.getElementById("msgErro");
+      const btnEntrar = document.getElementById("btnEntrar");
 
-      if (!email || !senha) {
-        alert('Informe e-mail e senha.');
-        return;
-      }
+      msgErro.style.display = "none";
+      btnEntrar.disabled = true;
+      btnEntrar.textContent = "Entrando...";
 
       try {
-        if (modoCadastro) {
-          if (!nomeUsuario) {
-            alert('Informe o nome de usuário para cadastro.');
-            return;
-          }
+        const resposta = await fetch(`${API_AUTH}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, senha })
+        });
 
-          // Validar se email já existe
-          const emailExistente = await verificarEmailExistente(email);
-          if (emailExistente) {
-            alert('Este e-mail já está registrado. Use outro e-mail ou faça login com sua conta existente.');
-            return;
-          }
+        const dados = await resposta.json();
 
-          // Validar se nome de usuário já existe
-          const nomeExistente = await verificarNomeUsuarioExistente(nomeUsuario);
-          if (nomeExistente) {
-            alert('Este nome de usuário já existe. Escolha outro nome de usuário.');
-            return;
-          }
-
-          const { error } = await salvarUsuarioSupabase(nomeUsuario, email, senha);
-
-          if (error) {
-            throw new Error(error.message || 'Erro ao cadastrar usuário.');
-          }
-
-          alert('Conta criada com sucesso. Agora faça login.');
-          modoCadastro = false;
-          atualizarModo();
-          return;
+        if (!resposta.ok) {
+          throw new Error(dados.mensagem || "Credenciais inválidas.");
         }
 
-        const usuario = await logarUsuarioSupabase(email, senha);
+        localStorage.setItem("token", dados.token);
+        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
 
-        // ✅ corrigido aqui
-        localStorage.setItem('nomeUsuario', usuario.name);
-        localStorage.setItem('emailUsuario', usuario.email);
-
-        window.location.href = 'index.html';
+        if (dados.usuario.perfil === "admin") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "index.html";
+        }
 
       } catch (err) {
-        console.log('--- login/cadastro trace ---');
-        console.log('modoCadastro:', modoCadastro);
-        console.log('nomeUsuario:', nomeUsuario);
-        console.log('email:', email);
-        console.log('senha:', senha ? '[hidden]' : '[vazio]');
-        console.error('Supabase/erro:', err);
-        alert(err.message || 'Erro no login.');
+        msgErro.textContent = err.message || "Erro ao realizar login.";
+        msgErro.style.display = "block";
+      } finally {
+        btnEntrar.disabled = false;
+        btnEntrar.textContent = "ENTRAR";
       }
-    };
-
-    document.getElementById('btnModo').addEventListener('click', (e) => {
-      e.preventDefault();
-      modoCadastro = !modoCadastro;
-      atualizarModo();
-    });
-
-    window.addEventListener('load', () => {
-      exibirUsuario();
-      atualizarModo();
     });
   </script>
 

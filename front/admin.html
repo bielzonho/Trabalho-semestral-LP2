@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Grão & Cesta</title>
+  <style>
+    :root {
+      --bg: #f5efe6;
+      --card: #fff8f0;
+      --gold: #c59d5f;
+      --gold-dark: #a07840;
+      --text: #3a2a1a;
+      --muted: #7a6a5a;
+      --border: #d4b896;
+      --shadow: rgba(100,60,20,0.12);
+      --danger: #c0392b;
+      --danger-light: #f9e8e8;
+      --success: #2e7d32;
+      --success-light: #e8f5e9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--card);
+      padding: 14px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-esq { display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 20px; color: var(--text); }
+    .badge-admin {
+      background: var(--gold);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .header-dir { display: flex; align-items: center; gap: 16px; }
+    .nome-usuario { font-size: 14px; color: var(--muted); font-weight: 600; }
+
+    .btn-sair {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-sair:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+
+    /* ABAS */
+    .tabs {
+      display: flex;
+      gap: 0;
+      padding: 24px 40px 0;
+      border-bottom: 2px solid var(--border);
+      background: var(--card);
+    }
+
+    .tab {
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--gold); }
+    .tab.ativa { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* CONTEÚDO */
+    .conteudo { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+
+    .painel { display: none; }
+    .painel.ativo { display: block; }
+
+    /* CABECALHO DE SECAO */
+    .secao-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .secao-header h2 { font-size: 22px; color: var(--text); }
+
+    .btn-novo {
+      padding: 10px 22px;
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-novo:hover { background: var(--gold-dark); }
+
+    /* TABELAS */
+    .tabela-container {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f0e6d8; }
+    th {
+      padding: 13px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { padding: 13px 16px; font-size: 14px; border-top: 1px solid var(--border); }
+    tr:hover { background: #fdf5e6; }
+
+    .acoes { display: flex; gap: 8px; }
+
+    .btn-acao {
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-editar { background: #e8f0fe; color: #1a56db; }
+    .btn-editar:hover { background: #c7d7fc; }
+    .btn-excluir { background: var(--danger-light); color: var(--danger); }
+    .btn-excluir:hover { background: #f5c6c6; }
+    .btn-status { background: var(--success-light); color: var(--success); }
+    .btn-status:hover { background: #c8e6c9; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.aberto { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .modal h3 { font-size: 18px; margin-bottom: 20px; color: var(--text); }
+
+    .campo { margin-bottom: 16px; }
+    .campo label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+    .campo input, .campo textarea, .campo select {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+    .campo input:focus, .campo textarea:focus, .campo select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+    .campo textarea { resize: vertical; min-height: 80px; }
+
+    .modal-acoes { display: flex; gap: 10px; margin-top: 20px; }
+
+    .btn-salvar {
+      flex: 1;
+      padding: 11px;
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-salvar:hover { background: var(--gold-dark); }
+
+    .btn-cancelar {
+      padding: 11px 22px;
+      background: #f0e6d8;
+      border: none;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-cancelar:hover { background: var(--border); }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* VAZIO */
+    .vazio {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+    .vazio p { font-size: 15px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #333;
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    .toast.visivel { opacity: 1; transform: translateY(0); }
+    .toast.sucesso { background: var(--success); }
+    .toast.erro { background: var(--danger); }
+
+    /* PEDIDOS STATUS SELECT */
+    .select-status { padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-esq">
+      <h1>Grão & Cesta</h1>
+      <span class="badge-admin">ADMIN</span>
+    </div>
+    <div class="header-dir">
+      <span class="nome-usuario" id="nomeAdmin"></span>
+      <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab ativa" onclick="abrirAba('produtos', this)">Produtos</div>
+    <div class="tab" onclick="abrirAba('cestas', this)">Cestas</div>
+    <div class="tab" onclick="abrirAba('pedidos', this)">Pedidos</div>
+  </div>
+
+  <div class="conteudo">
+
+    <!-- ===== PAINEL PRODUTOS ===== -->
+    <div id="painel-produtos" class="painel ativo">
+      <div class="secao-header">
+        <h2>Gerenciar Produtos</h2>
+        <button class="btn-novo" onclick="abrirModalProduto()">+ Novo Produto</button>
+      </div>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Preço</th>
+              <th>Estoque</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaProdutos">
+            <tr><td colspan="5"><div class="vazio"><p>Carregando...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAINEL CESTAS ===== -->
+    <div id="painel-cestas" class="painel">
+      <div class="secao-header">
+        <h2>Gerenciar Cestas</h2>
+        <button class="btn-novo" onclick="abrirModalCesta()">+ Nova Cesta</button>
+      </div>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Preço</th>
+              <th>Total de Itens</th>
+              <th>Vendas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaCestas">
+            <tr><td colspan="5"><div class="vazio"><p>Carregando...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAINEL PEDIDOS ===== -->
+    <div id="painel-pedidos" class="painel">
+      <div class="secao-header">
+        <h2>Gerenciar Pedidos</h2>
+      </div>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaPedidos">
+            <tr><td colspan="6"><div class="vazio"><p>Carregando...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== MODAL PRODUTO ===== -->
+  <div id="modalProduto" class="modal-overlay">
+    <div class="modal">
+      <h3 id="modalProdutoTitulo">Novo Produto</h3>
+      <div class="campo">
+        <label>Nome *</label>
+        <input type="text" id="prodNome" placeholder="Nome do produto">
+      </div>
+      <div class="campo">
+        <label>Descrição</label>
+        <textarea id="prodDescricao" placeholder="Descrição do produto"></textarea>
+      </div>
+      <div class="campo">
+        <label>Preço (R$) *</label>
+        <input type="number" id="prodPreco" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="campo">
+        <label>Quantidade em Estoque</label>
+        <input type="number" id="prodEstoque" placeholder="0" min="0">
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-cancelar" onclick="fecharModalProduto()">Cancelar</button>
+        <button class="btn-salvar" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CESTA ===== -->
+  <div id="modalCesta" class="modal-overlay">
+    <div class="modal">
+      <h3 id="modalCestaTitulo">Nova Cesta</h3>
+      <div class="campo">
+        <label>Nome *</label>
+        <input type="text" id="cestaNome" placeholder="Nome da cesta">
+      </div>
+      <div class="campo">
+        <label>Descrição</label>
+        <textarea id="cestaDescricao" placeholder="Descrição da cesta"></textarea>
+      </div>
+      <div class="campo">
+        <label>Preço Base (R$) *</label>
+        <input type="number" id="cestaPreco" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-cancelar" onclick="fecharModalCesta()">Cancelar</button>
+        <button class="btn-salvar" onclick="salvarCesta()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL STATUS PEDIDO ===== -->
+  <div id="modalStatus" class="modal-overlay">
+    <div class="modal">
+      <h3>Alterar Status do Pedido</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:18px;">Pedido ID: <strong id="statusPedidoId"></strong></p>
+      <div class="campo">
+        <label>Novo Status</label>
+        <select id="novoStatus">
+          <option value="pendente">Pendente</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="em_preparacao">Em Preparação</option>
+          <option value="saiu_para_entrega">Saiu para Entrega</option>
+          <option value="entregue">Entregue</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn-cancelar" onclick="fecharModalStatus()">Cancelar</button>
+        <button class="btn-salvar" onclick="confirmarStatus()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script src="api.js"></script>
+  <script>
+    // API_PRODUTOS, API_CESTAS, API_PEDIDOS já definidos em api.js
+    let produtoEditandoId = null;
+    let cestaEditandoId = null;
+    let pedidoStatusId = null;
+
+    // ============================================================
+    // AUTENTICAÇÃO
+    // ============================================================
+
+    (function verificarAdmin() {
+      const token = localStorage.getItem("token");
+      const usuario = localStorage.getItem("usuario");
+
+      if (!token || !usuario) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const u = JSON.parse(usuario);
+      if (u.perfil !== "admin") {
+        alert("Acesso restrito a administradores.");
+        window.location.href = "index.html";
+        return;
+      }
+
+      document.getElementById("nomeAdmin").textContent = u.nome;
+    })();
+
+    // fazerLogout já definido em api.js
+
+    // ============================================================
+    // ABAS
+    // ============================================================
+
+    const carregadores = {
+      produtos: carregarProdutos,
+      cestas: carregarCestas,
+      pedidos: carregarPedidos
+    };
+
+    function abrirAba(aba, el) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativa"));
+      document.querySelectorAll(".painel").forEach(p => p.classList.remove("ativo"));
+      el.classList.add("ativa");
+      document.getElementById(`painel-${aba}`).classList.add("ativo");
+      carregadores[aba]();
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+
+    function mostrarToast(msg, tipo = "sucesso") {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = `toast ${tipo} visivel`;
+      setTimeout(() => el.classList.remove("visivel"), 3000);
+    }
+
+    // ============================================================
+    // PRODUTOS
+    // ============================================================
+
+    async function carregarProdutos() {
+      const tbody = document.getElementById("tabelaProdutos");
+      tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Carregando...</p></div></td></tr>`;
+
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await fetch(API_PRODUTOS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const produtos = await resp.json();
+
+        if (!produtos.length) {
+          tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Nenhum produto cadastrado.</p></div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = produtos.map(p => `
+          <tr>
+            <td><strong>${p.nome}</strong></td>
+            <td>${formatarMoeda(p.preco)}</td>
+            <td>${p.quantidadeEstoque ?? 0}</td>
+            <td>
+              <span class="badge" style="background:${p.ativo ? '#e8f5e9' : '#ffeaea'};color:${p.ativo ? '#2e7d32' : '#c0392b'}">
+                ${p.ativo ? 'Ativo' : 'Inativo'}
+              </span>
+            </td>
+            <td>
+              <div class="acoes">
+                <button class="btn-acao btn-editar" onclick="editarProduto('${p.id}')">Editar</button>
+                <button class="btn-acao btn-excluir" onclick="excluirProduto('${p.id}', '${p.nome}')">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Erro ao carregar produtos.</p></div></td></tr>`;
+      }
+    }
+
+    function abrirModalProduto() {
+      produtoEditandoId = null;
+      document.getElementById("modalProdutoTitulo").textContent = "Novo Produto";
+      document.getElementById("prodNome").value = "";
+      document.getElementById("prodDescricao").value = "";
+      document.getElementById("prodPreco").value = "";
+      document.getElementById("prodEstoque").value = "";
+      document.getElementById("modalProduto").classList.add("aberto");
+    }
+
+    async function editarProduto(id) {
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await fetch(`${API_PRODUTOS}/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const p = await resp.json();
+        produtoEditandoId = id;
+        document.getElementById("modalProdutoTitulo").textContent = "Editar Produto";
+        document.getElementById("prodNome").value = p.nome;
+        document.getElementById("prodDescricao").value = p.descricao || "";
+        document.getElementById("prodPreco").value = p.preco;
+        document.getElementById("prodEstoque").value = p.quantidadeEstoque ?? 0;
+        document.getElementById("modalProduto").classList.add("aberto");
+      } catch (err) {
+        mostrarToast("Erro ao carregar produto.", "erro");
+      }
+    }
+
+    function fecharModalProduto() {
+      document.getElementById("modalProduto").classList.remove("aberto");
+    }
+
+    async function salvarProduto() {
+      const nome = document.getElementById("prodNome").value.trim();
+      const descricao = document.getElementById("prodDescricao").value.trim();
+      const preco = parseFloat(document.getElementById("prodPreco").value);
+      const quantidadeEstoque = parseInt(document.getElementById("prodEstoque").value || "0");
+
+      if (!nome || isNaN(preco)) {
+        mostrarToast("Preencha nome e preço.", "erro");
+        return;
+      }
+
+      const dados = { nome, descricao, preco, quantidadeEstoque };
+      const token = localStorage.getItem("token");
+
+      try {
+        const url = produtoEditandoId ? `${API_PRODUTOS}/${produtoEditandoId}` : API_PRODUTOS;
+        const method = produtoEditandoId ? "PUT" : "POST";
+        const resp = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(dados)
+        });
+
+        if (!resp.ok) {
+          const e = await resp.json();
+          throw new Error(e.mensagem);
+        }
+
+        fecharModalProduto();
+        mostrarToast(produtoEditandoId ? "Produto atualizado!" : "Produto criado!");
+        carregarProdutos();
+      } catch (err) {
+        mostrarToast(err.message || "Erro ao salvar.", "erro");
+      }
+    }
+
+    async function excluirProduto(id, nome) {
+      if (!confirm(`Excluir produto "${nome}"?`)) return;
+      const token = localStorage.getItem("token");
+      try {
+        const resp = await fetch(`${API_PRODUTOS}/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!resp.ok) throw new Error();
+        mostrarToast("Produto excluído.");
+        carregarProdutos();
+      } catch {
+        mostrarToast("Erro ao excluir produto.", "erro");
+      }
+    }
+
+    // ============================================================
+    // CESTAS
+    // ============================================================
+
+    async function carregarCestas() {
+      const tbody = document.getElementById("tabelaCestas");
+      tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Carregando...</p></div></td></tr>`;
+
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await fetch(API_CESTAS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const cestas = await resp.json();
+
+        if (!cestas.length) {
+          tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Nenhuma cesta cadastrada.</p></div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = cestas.map(c => `
+          <tr>
+            <td><strong>${c.nome}</strong></td>
+            <td>${formatarMoeda(c.preco)}</td>
+            <td>${c.totalItens ?? 0}</td>
+            <td>${c.quantidadeVendas ?? 0}</td>
+            <td>
+              <div class="acoes">
+                <button class="btn-acao btn-editar" onclick="editarCesta('${c.id}')">Editar</button>
+                <button class="btn-acao btn-excluir" onclick="excluirCesta('${c.id}', '${c.nome}')">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Erro ao carregar cestas.</p></div></td></tr>`;
+      }
+    }
+
+    function abrirModalCesta() {
+      cestaEditandoId = null;
+      document.getElementById("modalCestaTitulo").textContent = "Nova Cesta";
+      document.getElementById("cestaNome").value = "";
+      document.getElementById("cestaDescricao").value = "";
+      document.getElementById("cestaPreco").value = "";
+      document.getElementById("modalCesta").classList.add("aberto");
+    }
+
+    async function editarCesta(id) {
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await fetch(`${API_CESTAS}/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const c = await resp.json();
+        cestaEditandoId = id;
+        document.getElementById("modalCestaTitulo").textContent = "Editar Cesta";
+        document.getElementById("cestaNome").value = c.nome;
+        document.getElementById("cestaDescricao").value = c.descricao || "";
+        document.getElementById("cestaPreco").value = c.preco;
+        document.getElementById("modalCesta").classList.add("aberto");
+      } catch {
+        mostrarToast("Erro ao carregar cesta.", "erro");
+      }
+    }
+
+    function fecharModalCesta() {
+      document.getElementById("modalCesta").classList.remove("aberto");
+    }
+
+    async function salvarCesta() {
+      const nome = document.getElementById("cestaNome").value.trim();
+      const descricao = document.getElementById("cestaDescricao").value.trim();
+      const precoBase = parseFloat(document.getElementById("cestaPreco").value);
+
+      if (!nome || isNaN(precoBase)) {
+        mostrarToast("Preencha nome e preço.", "erro");
+        return;
+      }
+
+      const dados = { nome, descricao, precoBase };
+      const token = localStorage.getItem("token");
+
+      try {
+        const url = cestaEditandoId ? `${API_CESTAS}/${cestaEditandoId}` : API_CESTAS;
+        const method = cestaEditandoId ? "PUT" : "POST";
+        const resp = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(dados)
+        });
+
+        if (!resp.ok) {
+          const e = await resp.json();
+          throw new Error(e.mensagem);
+        }
+
+        fecharModalCesta();
+        mostrarToast(cestaEditandoId ? "Cesta atualizada!" : "Cesta criada!");
+        carregarCestas();
+      } catch (err) {
+        mostrarToast(err.message || "Erro ao salvar.", "erro");
+      }
+    }
+
+    async function excluirCesta(id, nome) {
+      if (!confirm(`Excluir cesta "${nome}"?`)) return;
+      const token = localStorage.getItem("token");
+      try {
+        const resp = await fetch(`${API_CESTAS}/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!resp.ok) throw new Error();
+        mostrarToast("Cesta excluída.");
+        carregarCestas();
+      } catch {
+        mostrarToast("Erro ao excluir cesta.", "erro");
+      }
+    }
+
+    // ============================================================
+    // PEDIDOS
+    // ============================================================
+
+    const STATUS_LABELS = {
+      pendente: "Pendente",
+      confirmado: "Confirmado",
+      em_preparacao: "Em Preparação",
+      saiu_para_entrega: "Saiu para Entrega",
+      entregue: "Entregue",
+      cancelado: "Cancelado"
+    };
+
+    const STATUS_CORES = {
+      pendente: { bg: "#fff3dc", text: "#8a6200" },
+      confirmado: { bg: "#dcf0ff", text: "#0052a3" },
+      em_preparacao: { bg: "#ffe6d9", text: "#a35200" },
+      saiu_para_entrega: { bg: "#f0e6ff", text: "#6200a3" },
+      entregue: { bg: "#dcffde", text: "#009200" },
+      cancelado: { bg: "#ffdcdc", text: "#a30000" }
+    };
+
+    async function carregarPedidos() {
+      const tbody = document.getElementById("tabelaPedidos");
+      tbody.innerHTML = `<tr><td colspan="6"><div class="vazio"><p>Carregando...</p></div></td></tr>`;
+
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await fetch(API_PEDIDOS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (resp.status === 401) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        const pedidos = await resp.json();
+
+        if (!pedidos.length) {
+          tbody.innerHTML = `<tr><td colspan="6"><div class="vazio"><p>Nenhum pedido registrado.</p></div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = pedidos.map(p => {
+          const cor = STATUS_CORES[p.status] || { bg: "#f0f0f0", text: "#333" };
+          const dataFormatada = p.criadoEm ? new Date(p.criadoEm).toLocaleDateString("pt-BR") : "-";
+          const idCurto = String(p.id).slice(0, 8);
+          return `
+            <tr>
+              <td><code style="font-size:12px;color:var(--muted)">${idCurto}...</code></td>
+              <td>${p.clienteNome}</td>
+              <td>${formatarMoeda(p.valorTotal)}</td>
+              <td>
+                <span class="badge" style="background:${cor.bg};color:${cor.text}">
+                  ${STATUS_LABELS[p.status] || p.status}
+                </span>
+              </td>
+              <td>${dataFormatada}</td>
+              <td>
+                <div class="acoes">
+                  <button class="btn-acao btn-status" onclick="abrirModalStatus('${p.id}', '${p.status}')">Status</button>
+                  <button class="btn-acao btn-excluir" onclick="excluirPedido('${p.id}')">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="vazio"><p>Erro ao carregar pedidos.</p></div></td></tr>`;
+      }
+    }
+
+    function abrirModalStatus(id, statusAtual) {
+      pedidoStatusId = id;
+      document.getElementById("statusPedidoId").textContent = String(id).slice(0, 12) + "...";
+      document.getElementById("novoStatus").value = statusAtual;
+      document.getElementById("modalStatus").classList.add("aberto");
+    }
+
+    function fecharModalStatus() {
+      document.getElementById("modalStatus").classList.remove("aberto");
+    }
+
+    async function confirmarStatus() {
+      const status = document.getElementById("novoStatus").value;
+      const token = localStorage.getItem("token");
+
+      try {
+        const resp = await fetch(`${API_PEDIDOS}/${pedidoStatusId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ status })
+        });
+
+        if (!resp.ok) throw new Error();
+        fecharModalStatus();
+        mostrarToast("Status atualizado!");
+        carregarPedidos();
+      } catch {
+        mostrarToast("Erro ao atualizar status.", "erro");
+      }
+    }
+
+    async function excluirPedido(id) {
+      if (!confirm("Excluir este pedido?")) return;
+      const token = localStorage.getItem("token");
+      try {
+        const resp = await fetch(`${API_PEDIDOS}/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!resp.ok) throw new Error();
+        mostrarToast("Pedido excluído.");
+        carregarPedidos();
+      } catch {
+        mostrarToast("Erro ao excluir pedido.", "erro");
+      }
+    }
+
+    // ============================================================
+    // FORMATADORES
+    // ============================================================
+
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    carregarProdutos();
+  </script>
+
+</body>
+</html>

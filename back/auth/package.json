@@ -1,7 +1,7 @@
 {
-  "name": "backend-cestas",
+  "name": "auth",
   "version": "1.0.0",
-  "description": "Microserviço de catálogo de cestas",
+  "description": "Microserviço de autenticação JWT",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -9,7 +9,6 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
