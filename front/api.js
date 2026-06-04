@@ -1,8 +1,9 @@
 // URLs das APIs
-const API_PRODUTOS = "http://localhost:3012/produtos";
-const API_CESTAS = "http://localhost:3010/cestas";
-const API_PEDIDOS = "http://localhost:3011/pedidos";
-const API_AUTH = "http://localhost:3013/auth";
+const API_PRODUTOS     = "http://localhost:3012/produtos";
+const API_CESTAS       = "http://localhost:3010/cestas";
+const API_PEDIDOS      = "http://localhost:3011/pedidos";
+const API_AUTH         = "http://localhost:3013/auth";
+const API_VERIFICACAO  = "http://localhost:3014/verificacao";
 
 // ============================================================
 // AUTENTICAÇÃO
@@ -41,7 +42,38 @@ function eAdmin() {
 function fazerLogout() {
   localStorage.removeItem("token");
   localStorage.removeItem("usuario");
+  localStorage.removeItem("emailVerificado");
   window.location.href = "login.html";
+}
+
+// ============================================================
+// VERIFICAÇÃO DE E-MAIL (OTP)
+// ============================================================
+
+async function enviarCodigoVerificacao(email) {
+  const res = await fetch(`${API_VERIFICACAO}/enviar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+  const dados = await res.json();
+  if (!res.ok) throw new Error(dados.mensagem || "Erro ao enviar código.");
+  return dados;
+}
+
+async function confirmarCodigoVerificacao(email, codigo) {
+  const res = await fetch(`${API_VERIFICACAO}/confirmar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, codigo })
+  });
+  const dados = await res.json();
+  if (!res.ok) throw new Error(dados.mensagem || "Código inválido ou expirado.");
+  return dados;
+}
+
+function emailEstaVerificado() {
+  return localStorage.getItem("emailVerificado") === "true";
 }
 
 // ============================================================
@@ -65,6 +97,7 @@ async function fetchAPI(url, options = {}) {
     if (resposta.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
+      localStorage.removeItem("emailVerificado");
       window.location.href = "login.html";
       return;
     }
@@ -102,6 +135,7 @@ async function fetchComAuth(url, options = {}) {
     if (resposta.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
+      localStorage.removeItem("emailVerificado");
       window.location.href = "login.html";
       return;
     }

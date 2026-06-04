@@ -28,3 +28,15 @@ export const usuarios: Usuario[] = [
 export function buscarPorEmail(email: string): Usuario | undefined {
   return usuarios.find((u) => u.email === email);
 }
+
+export function registrarUsuario(nome: string, email: string, senha: string): Usuario {
+  const novo: Usuario = {
+    id: String(Date.now()),
+    nome,
+    email,
+    senha,
+    perfil: "cliente"
+  };
+  usuarios.push(novo);
+  return novo;
+}

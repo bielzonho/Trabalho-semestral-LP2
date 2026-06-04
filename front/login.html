@@ -88,7 +88,7 @@
     }
     .form-group input:focus { outline: none; border-color: var(--gold); }
 
-    .btn-entrar {
+    .btn-primary {
       width: 100%;
       padding: 13px;
       background: var(--gold);
@@ -102,30 +102,99 @@
       letter-spacing: 0.5px;
       transition: background 0.2s;
     }
-    .btn-entrar:hover { background: #b08840; }
-    .btn-entrar:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-primary:hover { background: #b08840; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
-    .erro {
-      color: #b00;
-      background: #fff0f0;
-      border: 1px solid #f5c6c6;
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+    .btn-link:hover { color: #b08840; }
+
+    .btn-ghost {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      margin-top: 14px;
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+    .btn-ghost:hover { color: var(--text); }
+
+    .msg {
       border-radius: 6px;
       padding: 10px 14px;
       margin-bottom: 14px;
       font-size: 14px;
       display: none;
     }
+    .msg-erro { color: #b00; background: #fff0f0; border: 1px solid #f5c6c6; }
+    .msg-sucesso { color: #005500; background: #f0fff0; border: 1px solid #b2e4b2; }
 
-    .dica {
-      margin-top: 22px;
-      padding: 14px;
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .divisor {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+
+    .criar-conta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* OTP */
+    .otp-info {
       background: #fdf5e6;
       border: 1px solid var(--border);
       border-radius: 8px;
-      text-align: left;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
     }
-    .dica p { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-    .dica code { font-size: 12px; color: var(--text); background: #ede3d3; padding: 2px 6px; border-radius: 4px; display: block; margin-bottom: 4px; }
+    .otp-info strong { color: var(--text); }
+
+    .input-codigo {
+      letter-spacing: 10px;
+      font-size: 26px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .reenviar-row {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .reenviar-row button {
+      background: none;
+      border: none;
+      color: var(--gold);
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 13px;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -140,76 +209,271 @@
 
   <div class="login-container">
     <div class="login-card">
-      <h2>Acessar Conta</h2>
-      <p class="subtitulo">Grão & Cesta — Gestão de cestas e pedidos</p>
 
-      <div id="msgErro" class="erro"></div>
+      <!-- STEP 1: LOGIN -->
+      <div class="step active" id="stepLogin">
+        <h2>Acessar Conta</h2>
+        <p class="subtitulo">Grão & Cesta — Gestão de cestas e pedidos</p>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <label>E-mail</label>
-          <input type="email" id="email" required placeholder="seu@email.com" autocomplete="email">
+        <div id="erroLogin" class="msg msg-erro"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="email" required placeholder="seu@email.com" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="senha" required placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn-primary" id="btnEntrar">ENTRAR</button>
+        </form>
+
+        <div class="divisor"></div>
+        <div class="criar-conta-row">
+          <span>Não tem uma conta?</span>
+          <button class="btn-link" id="btnIrCadastro">Criar conta</button>
         </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" id="senha" required placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn-entrar" id="btnEntrar">ENTRAR</button>
-      </form>
-
-      <div class="dica">
-        <p>Contas disponíveis para teste:</p>
-        <code>admin@email.com / admin123</code>
-        <code>cliente@email.com / cliente123</code>
       </div>
+
+      <!-- STEP 2: OTP -->
+      <div class="step" id="stepOTP">
+        <h2>Verificar E-mail</h2>
+        <p class="subtitulo">Confirme seu acesso para continuar</p>
+
+        <div id="erroOTP" class="msg msg-erro"></div>
+
+        <div class="otp-info">
+          Um código foi enviado para <strong id="emailOTPDisplay"></strong>.<br>
+          Verifique sua caixa de entrada (e spam).
+        </div>
+
+        <form id="otpForm">
+          <div class="form-group">
+            <label>Código de verificação</label>
+            <input type="text" id="codigoOTP" class="input-codigo" required
+              placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+              autocomplete="one-time-code" inputmode="numeric">
+          </div>
+          <button type="submit" class="btn-primary" id="btnConfirmarOTP">CONFIRMAR CÓDIGO</button>
+        </form>
+
+        <div class="reenviar-row">
+          Não recebeu? <button type="button" id="btnReenviar">Reenviar código</button>
+        </div>
+        <button class="btn-ghost" id="btnVoltarLogin">Voltar ao login</button>
+      </div>
+
+      <!-- STEP 3: CADASTRO -->
+      <div class="step" id="stepCadastro">
+        <h2>Criar Conta</h2>
+        <p class="subtitulo">Preencha seus dados para se registrar</p>
+
+        <div id="erroCadastro" class="msg msg-erro"></div>
+        <div id="sucessoCadastro" class="msg msg-sucesso"></div>
+
+        <form id="cadastroForm">
+          <div class="form-group">
+            <label>Nome completo</label>
+            <input type="text" id="cadastroNome" required placeholder="Seu nome">
+          </div>
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="cadastroEmail" required placeholder="seu@email.com">
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="cadastroSenha" required placeholder="Mínimo 6 caracteres" minlength="6">
+          </div>
+          <div class="form-group">
+            <label>Confirmar senha</label>
+            <input type="password" id="cadastroConfirmar" required placeholder="Repita a senha">
+          </div>
+          <button type="submit" class="btn-primary" id="btnCadastrar">CRIAR CONTA</button>
+        </form>
+
+        <button class="btn-ghost" id="btnVoltarCadastro">Já tenho uma conta</button>
+      </div>
+
     </div>
   </div>
 
   <script>
-    const API_AUTH = "http://localhost:3013/auth";
+    const API_AUTH        = "http://localhost:3013/auth";
+    const API_VERIFICACAO = "http://localhost:3014/verificacao";
 
+    let tokenPendente   = null;
+    let usuarioPendente = null;
+    let emailPendente   = null;
+
+    function mostrarStep(id) {
+      document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    function mostrarMsg(id, texto) {
+      const el = document.getElementById(id);
+      el.textContent = texto;
+      el.style.display = "block";
+    }
+
+    function esconderMsg(id) {
+      document.getElementById(id).style.display = "none";
+    }
+
+    // ── LOGIN ───────────────────────────────────────────────
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      esconderMsg("erroLogin");
+      const btn = document.getElementById("btnEntrar");
+      btn.disabled = true;
+      btn.textContent = "Entrando...";
 
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value;
-      const msgErro = document.getElementById("msgErro");
-      const btnEntrar = document.getElementById("btnEntrar");
-
-      msgErro.style.display = "none";
-      btnEntrar.disabled = true;
-      btnEntrar.textContent = "Entrando...";
 
       try {
-        const resposta = await fetch(`${API_AUTH}/login`, {
+        const res  = await fetch(`${API_AUTH}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, senha })
         });
+        const dados = await res.json();
+        if (!res.ok) throw new Error(dados.mensagem || "Credenciais inválidas.");
 
-        const dados = await resposta.json();
+        tokenPendente   = dados.token;
+        usuarioPendente = dados.usuario;
+        emailPendente   = email;
 
-        if (!resposta.ok) {
-          throw new Error(dados.mensagem || "Credenciais inválidas.");
-        }
-
-        localStorage.setItem("token", dados.token);
-        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
-
-        if (dados.usuario.perfil === "admin") {
-          window.location.href = "admin.html";
-        } else {
-          window.location.href = "index.html";
+        // Dispara o envio do OTP
+        try {
+          const otpRes = await fetch(`${API_VERIFICACAO}/enviar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+          });
+          if (!otpRes.ok) throw new Error("Serviço indisponível");
+          document.getElementById("emailOTPDisplay").textContent = email;
+          mostrarStep("stepOTP");
+        } catch {
+          // Serviço de verificação fora do ar — avisa mas não bloqueia
+          mostrarMsg("erroLogin",
+            "Serviço de verificação de e-mail indisponível. Verifique se o microserviço na porta 3014 está rodando.");
         }
 
       } catch (err) {
-        msgErro.textContent = err.message || "Erro ao realizar login.";
-        msgErro.style.display = "block";
+        mostrarMsg("erroLogin", err.message || "Erro ao realizar login.");
       } finally {
-        btnEntrar.disabled = false;
-        btnEntrar.textContent = "ENTRAR";
+        btn.disabled = false;
+        btn.textContent = "ENTRAR";
       }
     });
+
+    // ── OTP ─────────────────────────────────────────────────
+    document.getElementById("otpForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      esconderMsg("erroOTP");
+      const btn = document.getElementById("btnConfirmarOTP");
+      btn.disabled = true;
+      btn.textContent = "Verificando...";
+
+      const codigo = document.getElementById("codigoOTP").value.trim();
+
+      try {
+        const res   = await fetch(`${API_VERIFICACAO}/confirmar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailPendente, codigo })
+        });
+        const dados = await res.json();
+        if (!res.ok) throw new Error(dados.mensagem || "Código inválido.");
+
+        localStorage.setItem("token",          tokenPendente);
+        localStorage.setItem("usuario",        JSON.stringify(usuarioPendente));
+        localStorage.setItem("emailVerificado", "true");
+
+        redirecionarUsuario(usuarioPendente.perfil);
+      } catch (err) {
+        mostrarMsg("erroOTP", err.message || "Código inválido ou expirado.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "CONFIRMAR CÓDIGO";
+      }
+    });
+
+    document.getElementById("btnReenviar").addEventListener("click", async () => {
+      try {
+        await fetch(`${API_VERIFICACAO}/enviar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailPendente })
+        });
+        alert("Novo código enviado para " + emailPendente);
+      } catch {
+        alert("Erro ao reenviar código. Verifique o serviço na porta 3014.");
+      }
+    });
+
+    document.getElementById("btnVoltarLogin").addEventListener("click", () => {
+      tokenPendente = usuarioPendente = emailPendente = null;
+      document.getElementById("codigoOTP").value = "";
+      esconderMsg("erroOTP");
+      mostrarStep("stepLogin");
+    });
+
+    // ── CADASTRO ─────────────────────────────────────────────
+    document.getElementById("btnIrCadastro").addEventListener("click", () => {
+      mostrarStep("stepCadastro");
+    });
+
+    document.getElementById("btnVoltarCadastro").addEventListener("click", () => {
+      mostrarStep("stepLogin");
+    });
+
+    document.getElementById("cadastroForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      esconderMsg("erroCadastro");
+      esconderMsg("sucessoCadastro");
+
+      const btn      = document.getElementById("btnCadastrar");
+      btn.disabled   = true;
+      btn.textContent = "Cadastrando...";
+
+      const nome      = document.getElementById("cadastroNome").value.trim();
+      const email     = document.getElementById("cadastroEmail").value.trim();
+      const senha     = document.getElementById("cadastroSenha").value;
+      const confirmar = document.getElementById("cadastroConfirmar").value;
+
+      if (senha !== confirmar) {
+        mostrarMsg("erroCadastro", "As senhas não coincidem.");
+        btn.disabled = false;
+        btn.textContent = "CRIAR CONTA";
+        return;
+      }
+
+      try {
+        const res   = await fetch(`${API_AUTH}/registrar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome, email, senha })
+        });
+        const dados = await res.json();
+        if (!res.ok) throw new Error(dados.mensagem || "Erro ao criar conta.");
+
+        mostrarMsg("sucessoCadastro", "Conta criada com sucesso! Faça login para continuar.");
+        document.getElementById("cadastroForm").reset();
+        setTimeout(() => mostrarStep("stepLogin"), 2200);
+      } catch (err) {
+        mostrarMsg("erroCadastro", err.message || "Erro ao criar conta.");
+      } finally {
+        btn.disabled   = false;
+        btn.textContent = "CRIAR CONTA";
+      }
+    });
+
+    function redirecionarUsuario(perfil) {
+      window.location.href = perfil === "admin" ? "admin.html" : "index.html";
+    }
   </script>
 
 </body>

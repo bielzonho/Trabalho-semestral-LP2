@@ -76,6 +76,46 @@ function handleSupabaseError(res: Response, error: { message: string }) {
   });
 }
 
+// Status que indicam que o pedido foi efetivado (só decrementa na primeira vez)
+const STATUS_EFETIVADO: StatusPedido[] = ["confirmado", "entregue"];
+
+function deveDecrementarEstoque(
+  statusAnterior: StatusPedido | null | undefined,
+  novoStatus: StatusPedido
+): boolean {
+  return (
+    STATUS_EFETIVADO.includes(novoStatus) &&
+    !STATUS_EFETIVADO.includes(statusAnterior as StatusPedido)
+  );
+}
+
+async function decrementarEstoque(carrinhoId: string): Promise<void> {
+  const { data: itensCarrinho } = await supabase
+    .from("carrinho_itens_adicionais")
+    .select("item_id, quantidade")
+    .eq("carrinho_id", carrinhoId);
+
+  if (!itensCarrinho || itensCarrinho.length === 0) return;
+
+  for (const item of itensCarrinho as { item_id: string; quantidade: number }[]) {
+    const { data: produto } = await supabase
+      .from("itens")
+      .select("quantidade_estoque")
+      .eq("id", item.item_id)
+      .single();
+
+    if (!produto) continue;
+
+    const estoqueAtual = Number(produto.quantidade_estoque) || 0;
+    const novoEstoque  = Math.max(0, estoqueAtual - item.quantidade);
+
+    await supabase
+      .from("itens")
+      .update({ quantidade_estoque: novoEstoque })
+      .eq("id", item.item_id);
+  }
+}
+
 async function buscarItensDoCarrinho(carrinhoId: string) {
   const { data, error } = await supabase
     .from("carrinho_itens_adicionais")
@@ -118,6 +158,27 @@ async function buscarPedido(id: string) {
 
   return mapPedido(venda, itens);
 }
+
+// GET /pedidos/meus — cliente autenticado vê só os próprios pedidos
+router.get("/meus", requireAuth, async (req: Request, res: Response) => {
+  const nomeCliente = req.usuario?.nome;
+
+  if (!nomeCliente) {
+    return res.status(401).json({ mensagem: "Usuário não identificado." });
+  }
+
+  const { data, error } = await supabase
+    .from("vendas_cestas")
+    .select("*")
+    .ilike("cliente_nome", nomeCliente)
+    .order("data_venda", { ascending: false });
+
+  if (error) return handleSupabaseError(res, error);
+
+  return res.status(200).json(
+    ((data || []) as VendaCestaRow[]).map((row) => mapPedido(row))
+  );
+});
 
 // GET /pedidos — somente admin
 router.get("/", requireAuth, requireRole("admin"), async (_req: Request, res: Response) => {
@@ -219,6 +280,16 @@ router.post("/", requireAuth, requireRole("cliente"), async (req: Request, res: 
   if (vendaError) return handleSupabaseError(res, vendaError);
 
   const itensCarrinho = await buscarItensDoCarrinho(String(carrinho.id));
+
+  // Decrementa estoque se pedido já foi criado como confirmado/entregue
+  if (deveDecrementarEstoque(null, (status || "pendente") as StatusPedido)) {
+    try {
+      await decrementarEstoque(String(carrinho.id));
+    } catch (err) {
+      console.error("Aviso: erro ao decrementar estoque no POST:", err);
+    }
+  }
+
   return res.status(201).json(mapPedido(venda as VendaCestaRow, itensCarrinho));
 });
 
@@ -234,6 +305,13 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
     enderecoEntrega,
     observacoes
   } = req.body;
+
+  // Busca status atual antes de atualizar
+  const { data: pedidoAtual } = await supabase
+    .from("vendas_cestas")
+    .select("status, carrinho_id")
+    .eq("id", req.params.id)
+    .maybeSingle();
 
   const payload = {
     ...(cestaId !== undefined && { cesta_id: cestaId }),
@@ -260,6 +338,21 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
   if (error) return handleSupabaseError(res, error);
   if (!data) return res.status(404).json({ mensagem: "Pedido não encontrado." });
 
+  // Decrementa estoque se o status foi alterado para confirmado/entregue pela primeira vez
+  if (
+    status !== undefined &&
+    pedidoAtual &&
+    pedidoAtual.carrinho_id &&
+    deveDecrementarEstoque(pedidoAtual.status as StatusPedido, status as StatusPedido)
+  ) {
+    try {
+      await decrementarEstoque(String(pedidoAtual.carrinho_id));
+      console.log(`Estoque decrementado — pedido ${req.params.id} → ${status}`);
+    } catch (err) {
+      console.error("Aviso: erro ao decrementar estoque:", err);
+    }
+  }
+
   return res.status(200).json(mapPedido(data as VendaCestaRow));
 });
 
@@ -267,6 +360,13 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
 router.patch("/:id/status", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { status } = req.body as { status: StatusPedido };
   const pago = status === "confirmado" || status === "entregue";
+
+  // Busca status atual antes de atualizar para saber se deve decrementar
+  const { data: pedidoAtual } = await supabase
+    .from("vendas_cestas")
+    .select("status, carrinho_id")
+    .eq("id", req.params.id)
+    .maybeSingle();
 
   const { data, error } = await supabase
     .from("vendas_cestas")
@@ -277,6 +377,21 @@ router.patch("/:id/status", requireAuth, requireRole("admin"), async (req: Reque
 
   if (error) return handleSupabaseError(res, error);
   if (!data) return res.status(404).json({ mensagem: "Pedido não encontrado." });
+
+  // Decrementa estoque na primeira transição para confirmado/entregue
+  if (
+    pedidoAtual &&
+    pedidoAtual.carrinho_id &&
+    deveDecrementarEstoque(pedidoAtual.status as StatusPedido, status)
+  ) {
+    try {
+      await decrementarEstoque(String(pedidoAtual.carrinho_id));
+      console.log(`Estoque decrementado — pedido ${req.params.id} → ${status}`);
+    } catch (err) {
+      console.error("Aviso: erro ao decrementar estoque:", err);
+      // Não bloqueia a resposta; o status já foi salvo
+    }
+  }
 
   return res.status(200).json(mapPedido(data as VendaCestaRow));
 });
