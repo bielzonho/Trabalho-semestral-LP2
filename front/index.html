@@ -336,6 +336,207 @@
         font-size: 24px;
       }
     }
+
+    /* ── Produtos ── */
+    .grid-produtos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .produto-card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .produto-card .p-nome {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .produto-card .p-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .produto-card .p-preco {
+      font-weight: 800;
+      color: var(--gold);
+      font-size: 16px;
+    }
+
+    .btn-add-produto {
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn-add-produto:hover { background: #b08840; }
+
+    /* ── Itens do pedido ── */
+    .itens-section {
+      margin: 16px 0 10px;
+      border: 1px solid #e7e1d8;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .itens-section-header {
+      background: #f9f7f3;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .itens-lista { padding: 8px; }
+
+    .item-pedido-row {
+      display: grid;
+      grid-template-columns: 1fr 64px 80px auto;
+      gap: 8px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #e7e1d8;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .item-pedido-row:last-child { margin-bottom: 0; }
+
+    .item-pedido-row select,
+    .item-pedido-row input {
+      padding: 5px 7px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .item-subtotal { font-weight: 700; color: var(--gold); text-align: right; }
+
+    .btn-remover-item {
+      background: #fff0f0;
+      border: 1px solid #fcc;
+      color: #c00;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .btn-remover-item:hover { background: #ffe0e0; }
+
+    .itens-vazio {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 12px;
+      font-style: italic;
+    }
+
+    .total-pedido-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 4px 4px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .total-valor {
+      color: var(--gold);
+      font-size: 18px;
+    }
+
+    /* ── Meus pedidos ── */
+    .meu-pedido {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #fafaf8;
+    }
+
+    .meu-pedido:last-child { margin-bottom: 0; }
+
+    .meu-pedido-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .meu-pedido-cesta {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .meu-pedido-valor {
+      font-weight: 800;
+      color: var(--gold);
+      font-size: 15px;
+    }
+
+    .meu-pedido-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .badge-pendente         { background: #fff3dc; color: #8a6200; }
+    .badge-confirmado       { background: #dcf0ff; color: #0052a3; }
+    .badge-em_preparacao    { background: #ffe6d9; color: #a35200; }
+    .badge-saiu_para_entrega{ background: #f0e6ff; color: #6200a3; }
+    .badge-entregue         { background: #dcffde; color: #009200; }
+    .badge-cancelado        { background: #ffdcdc; color: #a30000; }
+
+    .btn-atualizar-pedidos {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .btn-atualizar-pedidos:hover { background: #f5f0ea; color: var(--text); }
   </style>
 </head>
 <body>
@@ -464,6 +665,19 @@
 
     <div class="section-divider"></div>
 
+    <section id="produtos-extra">
+      <h2 class="section-title">Produtos Disponíveis</h2>
+      <p class="section-subtitle">
+        Veja os produtos disponíveis para adicionar ao seu pedido.
+        Clique em <strong>+ Adicionar ao pedido</strong> para incluir na lista abaixo.
+      </p>
+      <div id="listaProdutos" class="grid-produtos">
+        <p class="empty">Carregando produtos...</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
     <section id="pedidos">
       <h2 class="section-title">Pedidos</h2>
       <p class="section-subtitle">
@@ -505,8 +719,37 @@
               <textarea id="observacao" placeholder="Ex.: Entregar pela manhã, incluir cartão..."></textarea>
             </div>
 
+            <!-- Itens adicionais -->
+            <div class="itens-section">
+              <div class="itens-section-header">
+                <span>Produtos adicionais</span>
+                <button type="button" class="btn-add-produto" style="width:auto;padding:5px 12px;font-size:12px;" onclick="adicionarItemManual()">+ Adicionar produto</button>
+              </div>
+              <div class="itens-lista">
+                <div id="itensPedido">
+                  <p class="itens-vazio" id="itensVazio">Nenhum produto adicional. Use os botões acima ou clique em "+ Adicionar produto".</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="total-pedido-row">
+              <span>Total estimado:</span>
+              <span class="total-valor" id="totalDisplay">R$ 0,00</span>
+            </div>
+
             <button class="btn btn-primary" type="submit">Enviar pedido</button>
           </form>
+        </div>
+
+        <!-- Card: Meus Pedidos -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;">Meus pedidos</h3>
+            <button class="btn-atualizar-pedidos" id="btnAtualizarPedidos">↺ Atualizar</button>
+          </div>
+          <div id="listaMeusPedidos">
+            <p class="empty">Faça login para ver seus pedidos.</p>
+          </div>
         </div>
 
       </div>
@@ -514,66 +757,64 @@
   </main>
 
   <script>
-    const API_CESTAS = "http://localhost:3010/cestas";
-    const API_PEDIDOS = "http://localhost:3011/pedidos";
+    const API_CESTAS   = "http://localhost:3010/cestas";
+    const API_PEDIDOS  = "http://localhost:3011/pedidos";
+    const API_PRODUTOS = "http://localhost:3012/produtos";
 
-    let cestasCache = [];
+    let cestasCache   = [];
+    let produtosCache = [];
+    let itemCount     = 0;
+
+    // ── Utilitários ──────────────────────────────────────────
 
     function formatarPreco(valor) {
-      const numero = Number(valor);
-      if (Number.isNaN(numero)) return "0,00";
-      return numero.toFixed(2).replace(".", ",");
+      const n = Number(valor);
+      if (Number.isNaN(n)) return "0,00";
+      return n.toFixed(2).replace(".", ",");
     }
+
+    function formatarMoeda(valor) {
+      return "R$ " + formatarPreco(valor);
+    }
+
+    // ── Cestas ───────────────────────────────────────────────
 
     async function carregarCestas() {
       try {
         const resposta = await fetch(API_CESTAS);
         const dados = await resposta.json();
-
         cestasCache = Array.isArray(dados) ? dados : [];
 
-        const lista = document.getElementById("listaCestas");
+        const lista  = document.getElementById("listaCestas");
         const select = document.getElementById("cestaId");
-
-        lista.innerHTML = "";
-        select.innerHTML = "";
+        lista.innerHTML  = "";
+        select.innerHTML = '<option value="">— sem cesta —</option>';
 
         if (cestasCache.length === 0) {
           lista.innerHTML = '<p class="empty">Nenhuma cesta encontrada.</p>';
-          select.innerHTML = '<option value="">Nenhuma cesta disponível</option>';
           return;
         }
 
         cestasCache.forEach(cesta => {
           const imagem = String(cesta.nome).toLowerCase().includes("premium")
-            ? "cesta_premium.jpg"
-            : "cesta.jpg";
+            ? "cesta_premium.jpg" : "cesta.jpg";
 
           const card = document.createElement("article");
           card.className = "cesta";
-
           card.innerHTML = `
-            <div class="imagem">
-              <img src="${imagem}" alt="${cesta.nome}">
-            </div>
+            <div class="imagem"><img src="${imagem}" alt="${cesta.nome}"></div>
             <div class="info">
               <h3 class="nome">${cesta.nome}</h3>
               <p class="descricao">${cesta.descricao || "Sem descrição."}</p>
-              <div class="preco">R$ ${formatarPreco(cesta.preco)}</div>
-            </div>
-          `;
-
+              <div class="preco">R$ ${formatarPreco(cesta.preco || cesta.precoBase)}</div>
+            </div>`;
           lista.appendChild(card);
 
-          const option = document.createElement("option");
-          option.value = cesta.id;
-          option.textContent = `${cesta.nome} — R$ ${formatarPreco(cesta.preco)}`;
-          select.appendChild(option);
+          const opt = document.createElement("option");
+          opt.value = cesta.id;
+          opt.textContent = `${cesta.nome} — R$ ${formatarPreco(cesta.preco || cesta.precoBase)}`;
+          select.appendChild(opt);
         });
-
-        if (!select.value && select.options.length > 0) {
-          select.selectedIndex = 0;
-        }
       } catch (erro) {
         console.error("Erro ao carregar cestas:", erro);
         document.getElementById("listaCestas").innerHTML =
@@ -581,82 +822,249 @@
       }
     }
 
-    async function carregarPedidos() {
-      const lista = document.getElementById("listaPedidos");
+    // ── Produtos ─────────────────────────────────────────────
 
+    async function carregarProdutos() {
+      const lista = document.getElementById("listaProdutos");
       try {
-        const resposta = await fetch(API_PEDIDOS);
+        const token   = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res     = await fetch(API_PRODUTOS, { headers });
 
-        if (!resposta.ok) {
-          throw new Error(`HTTP ${resposta.status}`);
-        }
-
-        const dados = await resposta.json();
-        const pedidos = Array.isArray(dados) ? dados : [];
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const dados = await res.json();
+        produtosCache = Array.isArray(dados) ? dados : [];
 
         lista.innerHTML = "";
 
-        if (pedidos.length === 0) {
-          lista.innerHTML = '<p class="empty">Nenhum pedido cadastrado.</p>';
+        if (produtosCache.length === 0) {
+          lista.innerHTML = '<p class="empty">Nenhum produto disponível.</p>';
           return;
         }
 
-        pedidos.forEach(pedido => {
-          const cestaRelacionada = cestasCache.find(c => c.id === pedido.cestaId);
-          const nomeCesta = pedido.cestaNome || cestaRelacionada?.nome || "Cesta não identificada";
-          const total =
-            pedido.total !== undefined
-              ? `R$ ${formatarPreco(pedido.total)}`
-              : (cestaRelacionada?.preco !== undefined && pedido.quantidade
-                  ? `R$ ${formatarPreco(Number(cestaRelacionada.preco) * Number(pedido.quantidade))}`
-                  : "—");
-
-          const div = document.createElement("div");
-          div.className = "pedido-item";
-
-          div.innerHTML = `
-            <strong>${pedido.nomeCliente || "Cliente não informado"}</strong>
-            <div class="pedido-meta">
-              <div><b>Telefone:</b> ${pedido.telefone || "—"}</div>
-              <div><b>Cesta:</b> ${nomeCesta}</div>
-              <div><b>Quantidade:</b> ${pedido.quantidade || 1}</div>
-              <div><b>Total:</b> ${total}</div>
-              <div><b>Observação:</b> ${pedido.observacao || "—"}</div>
-            </div>
-            <span class="status">${pedido.status || "Pendente"}</span>
-          `;
-
-          lista.appendChild(div);
+        produtosCache.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "produto-card";
+          card.innerHTML = `
+            <div class="p-nome">${p.nome}</div>
+            <div class="p-desc">${p.descricao || ""}</div>
+            <div class="p-preco">${formatarMoeda(p.preco)}</div>
+            <button type="button" class="btn-add-produto"
+              onclick="adicionarItemDireto('${p.id}', ${p.preco})">
+              + Adicionar ao pedido
+            </button>`;
+          lista.appendChild(card);
         });
       } catch (erro) {
-        console.error("Erro ao carregar pedidos:", erro);
-        lista.innerHTML =
-          '<p class="empty">O microserviço de pedidos não respondeu ou a rota está diferente.</p>';
+        console.error("Erro ao carregar produtos:", erro);
+        lista.innerHTML = '<p class="empty">Não foi possível carregar os produtos.</p>';
       }
     }
+
+    // ── Itens do pedido ──────────────────────────────────────
+
+    function atualizarVazio() {
+      const container = document.getElementById("itensPedido");
+      const vazio     = document.getElementById("itensVazio");
+      const temItens  = container.querySelectorAll(".item-pedido-row").length > 0;
+      vazio.style.display = temItens ? "none" : "block";
+    }
+
+    function calcularTotal() {
+      const cesta = cestasCache.find(c => c.id === document.getElementById("cestaId").value);
+      const qtdCesta = Number(document.getElementById("quantidade").value) || 0;
+      let total = Number(cesta?.preco || cesta?.precoBase || 0) * qtdCesta;
+
+      document.querySelectorAll(".item-pedido-row").forEach(row => {
+        const qty   = Number(row.querySelector(".item-qty").value)   || 0;
+        const preco = Number(row.querySelector(".item-preco").value) || 0;
+        const sub   = qty * preco;
+        row.querySelector(".item-subtotal").textContent = formatarMoeda(sub);
+        total += sub;
+      });
+
+      document.getElementById("totalDisplay").textContent = formatarMoeda(total);
+    }
+
+    function construirLinhaItem(produtoId, preco) {
+      itemCount++;
+      const opts = produtosCache.map(p =>
+        `<option value="${p.id}" data-preco="${p.preco}" ${p.id === produtoId ? "selected" : ""}>${p.nome}</option>`
+      ).join("");
+
+      return `
+        <div class="item-pedido-row" id="irow-${itemCount}">
+          <select class="item-select" onchange="onSelectItem(this)">
+            ${opts}
+          </select>
+          <input class="item-qty" type="number" min="1" value="1" onchange="calcularTotal()">
+          <input class="item-preco" type="hidden" value="${preco}">
+          <span class="item-subtotal">${formatarMoeda(preco)}</span>
+          <button type="button" class="btn-remover-item" onclick="removerItemPedido('irow-${itemCount}')">✕</button>
+        </div>`;
+    }
+
+    window.adicionarItemDireto = function(produtoId, preco) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Faça login para adicionar produtos ao pedido.");
+        window.location.href = "login.html";
+        return;
+      }
+      const container = document.getElementById("itensPedido");
+      container.insertAdjacentHTML("beforeend", construirLinhaItem(produtoId, preco));
+      atualizarVazio();
+      calcularTotal();
+      document.getElementById("pedidos").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    window.adicionarItemManual = function() {
+      if (produtosCache.length === 0) {
+        alert("Nenhum produto disponível para adicionar.");
+        return;
+      }
+      const primeiro = produtosCache[0];
+      adicionarItemDireto(primeiro.id, primeiro.preco);
+    };
+
+    window.removerItemPedido = function(rowId) {
+      document.getElementById(rowId)?.remove();
+      atualizarVazio();
+      calcularTotal();
+    };
+
+    window.onSelectItem = function(sel) {
+      const opt   = sel.options[sel.selectedIndex];
+      const preco = Number(opt.dataset.preco) || 0;
+      const row   = sel.closest(".item-pedido-row");
+      row.querySelector(".item-preco").value = preco;
+      calcularTotal();
+    };
+
+    // Recalcula total ao mudar cesta ou quantidade
+    document.getElementById("cestaId").addEventListener("change", calcularTotal);
+    document.getElementById("quantidade").addEventListener("change", calcularTotal);
+
+    // ── Meus pedidos ─────────────────────────────────────────
+
+    const statusLabel = {
+      pendente:          "Pendente",
+      confirmado:        "Confirmado",
+      em_preparacao:     "Em Preparação",
+      saiu_para_entrega: "Saiu para Entrega",
+      entregue:          "Entregue",
+      cancelado:         "Cancelado"
+    };
+
+    async function carregarMeusPedidos() {
+      const lista  = document.getElementById("listaMeusPedidos");
+      const token  = localStorage.getItem("token");
+
+      if (!token) {
+        lista.innerHTML = '<p class="empty">Faça login para ver seus pedidos.</p>';
+        return;
+      }
+
+      lista.innerHTML = '<p class="empty">Carregando...</p>';
+
+      try {
+        const res = await fetch(`${API_PEDIDOS}/meus`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.status === 401) {
+          lista.innerHTML = '<p class="empty">Sessão expirada. Faça login novamente.</p>';
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const pedidos = await res.json();
+
+        if (!pedidos.length) {
+          lista.innerHTML = '<p class="empty">Você ainda não fez nenhum pedido.</p>';
+          return;
+        }
+
+        lista.innerHTML = pedidos.map(p => {
+          const cesta    = cestasCache.find(c => c.id === p.cestaId);
+          const nomeCesta = cesta?.nome || "Cesta não identificada";
+          const status   = p.status || "pendente";
+          const label    = statusLabel[status] || status;
+          const data     = p.criadoEm
+            ? new Date(p.criadoEm).toLocaleDateString("pt-BR") : "—";
+
+          return `
+            <div class="meu-pedido">
+              <div class="meu-pedido-header">
+                <span class="meu-pedido-cesta">${nomeCesta}</span>
+                <span class="meu-pedido-valor">R$ ${formatarPreco(p.valorTotal)}</span>
+              </div>
+              <div class="meu-pedido-meta">
+                <div><b>Data:</b> ${data}</div>
+                ${p.enderecoEntrega ? `<div><b>Endereço:</b> ${p.enderecoEntrega}</div>` : ""}
+                ${p.observacoes    ? `<div><b>Obs:</b> ${p.observacoes}</div>` : ""}
+              </div>
+              <span class="badge-status badge-${status}">${label}</span>
+            </div>`;
+        }).join("");
+
+      } catch (erro) {
+        console.error("Erro ao carregar pedidos:", erro);
+        lista.innerHTML = '<p class="empty">Não foi possível carregar seus pedidos.</p>';
+      }
+    }
+
+    document.getElementById("btnAtualizarPedidos")
+      .addEventListener("click", carregarMeusPedidos);
+
+    // ── Criar pedido ─────────────────────────────────────────
 
     async function criarPedido(event) {
       event.preventDefault();
 
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Você precisa estar logado para fazer um pedido.\nAcesse a página de Login.");
+        alert("Você precisa estar logado para fazer um pedido.");
         window.location.href = "login.html";
         return;
       }
 
-      const cestaId = document.getElementById("cestaId").value;
-      const cestaSelecionada = cestasCache.find(c => c.id === cestaId);
-      const quantidade = Number(document.getElementById("quantidade").value);
-      const valorTotal = Number((Number(cestaSelecionada?.preco || 0) * quantidade).toFixed(2));
+      if (localStorage.getItem("emailVerificado") !== "true") {
+        alert("Você precisa verificar seu e-mail antes de realizar pedidos.\nFaça login novamente para receber o código de verificação.");
+        return;
+      }
+
+      const cestaId  = document.getElementById("cestaId").value || null;
+      const cesta    = cestasCache.find(c => c.id === cestaId);
+      const qtdCesta = Number(document.getElementById("quantidade").value) || 1;
+      const telefone = document.getElementById("telefone").value.trim();
+      const endereco = document.getElementById("enderecoEntrega").value.trim();
+      const obs      = document.getElementById("observacao").value.trim();
+
+      // Coleta itens adicionais
+      const itens = [];
+      document.querySelectorAll(".item-pedido-row").forEach(row => {
+        const produtoId     = row.querySelector(".item-select").value;
+        const quantidade    = Number(row.querySelector(".item-qty").value) || 1;
+        const precoUnitario = Number(row.querySelector(".item-preco").value) || 0;
+        if (produtoId) itens.push({ produtoId, quantidade, precoUnitario });
+      });
+
+      // Calcula valor total
+      let valorTotal = Number(cesta?.preco || cesta?.precoBase || 0) * qtdCesta;
+      itens.forEach(it => { valorTotal += it.quantidade * it.precoUnitario; });
+      valorTotal = Number(valorTotal.toFixed(2));
 
       const payload = {
-        clienteNome: document.getElementById("nomeCliente").value.trim(),
-        clienteTelefone: document.getElementById("telefone").value.trim(),
-        enderecoEntrega: document.getElementById("enderecoEntrega").value.trim(),
+        clienteNome:     document.getElementById("nomeCliente").value.trim(),
+        clienteTelefone: telefone,
+        enderecoEntrega: endereco,
         cestaId,
-        quantidade,
-        valorTotal
+        quantidade:      qtdCesta,
+        observacoes:     obs,
+        valorTotal,
+        itens
       };
 
       try {
@@ -673,6 +1081,7 @@
           alert("Sessão expirada. Faça login novamente.");
           localStorage.removeItem("token");
           localStorage.removeItem("usuario");
+          localStorage.removeItem("emailVerificado");
           window.location.href = "login.html";
           return;
         }
@@ -684,8 +1093,12 @@
 
         document.getElementById("pedidoForm").reset();
         document.getElementById("quantidade").value = 1;
+        document.getElementById("itensPedido").querySelectorAll(".item-pedido-row").forEach(r => r.remove());
+        atualizarVazio();
+        calcularTotal();
 
-        alert("Pedido enviado com sucesso.");
+        alert("Pedido enviado com sucesso!");
+        carregarMeusPedidos();
       } catch (erro) {
         console.error("Erro ao criar pedido:", erro);
         alert(`Não foi possível criar o pedido: ${erro.message || erro}`);
@@ -694,39 +1107,52 @@
 
     document.getElementById("pedidoForm").addEventListener("submit", criarPedido);
 
+    // ── Usuário logado ────────────────────────────────────────
+
     function exibirUsuario() {
-      const nav = document.getElementById('navUsuario');
-      const dadosStr = localStorage.getItem('usuario');
-      const usuario = dadosStr ? JSON.parse(dadosStr) : null;
+      const nav      = document.getElementById("navUsuario");
+      const dadosStr = localStorage.getItem("usuario");
+      const usuario  = dadosStr ? JSON.parse(dadosStr) : null;
 
       if (usuario) {
         const linkAdmin = usuario.perfil === "admin"
-          ? `<a href="admin.html" style="color:var(--gold);font-weight:700;">Painel Admin</a>`
-          : "";
+          ? `<a href="admin.html" style="color:var(--gold);font-weight:700;">Painel Admin</a>` : "";
 
         nav.innerHTML = `
           <a href="#catalogo">Catálogo</a>
+          <a href="#produtos-extra">Produtos</a>
+          <a href="#pedidos">Pedido</a>
           ${linkAdmin}
           <span style="font-weight:700;color:#444;">${usuario.nome}</span>
-          <button id="btnLogout" class="btn btn-ghost">Sair</button>
-        `;
+          <button id="btnLogout" class="btn btn-ghost">Sair</button>`;
 
-        document.getElementById('btnLogout').addEventListener('click', () => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('usuario');
+        document.getElementById("btnLogout").addEventListener("click", () => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("usuario");
+          localStorage.removeItem("emailVerificado");
           window.location.reload();
         });
       } else {
         nav.innerHTML = `
           <a href="#catalogo">Catálogo</a>
-          <a href="login.html">Login</a>
-        `;
+          <a href="#produtos-extra">Produtos</a>
+          <a href="login.html">Login</a>`;
       }
     }
 
     window.addEventListener("load", async () => {
-      await carregarCestas();
       exibirUsuario();
+
+      // Pré-preenche o nome do cliente com o nome da conta logada
+      const dadosStr = localStorage.getItem("usuario");
+      if (dadosStr) {
+        const usuario = JSON.parse(dadosStr);
+        const campoNome = document.getElementById("nomeCliente");
+        if (campoNome && !campoNome.value) campoNome.value = usuario.nome;
+      }
+
+      await Promise.all([carregarCestas(), carregarProdutos()]);
+      await carregarMeusPedidos();
     });
   </script>
 </body>

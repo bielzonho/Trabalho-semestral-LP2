@@ -377,6 +377,57 @@
       justify-content: space-between;
       padding: 4px 0;
     }
+
+    .item-row-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px auto;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .produtos-ref {
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    .produtos-ref summary {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      background: #f9f7f3;
+      user-select: none;
+      list-style: none;
+    }
+
+    .produtos-ref summary::before { content: "▶ "; font-size: 10px; }
+    .produtos-ref[open] summary::before { content: "▼ "; font-size: 10px; }
+
+    .produtos-ref summary:hover { background: #f0ebe0; color: var(--text); }
+
+    .produtos-ref-tabela { padding: 6px 8px; }
+
+    .produto-ref-linha {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 8px;
+      font-size: 12px;
+      border-bottom: 1px solid #f0ece4;
+    }
+
+    .produto-ref-linha:last-child { border-bottom: none; }
+    .produto-ref-linha:nth-child(even) { background: #fafaf8; }
+    .produto-ref-preco { font-weight: 700; color: var(--gold); }
   </style>
 </head>
 <body>
@@ -445,6 +496,22 @@
 
         <div class="items-section">
           <h4>Itens do Pedido</h4>
+
+          <details class="produtos-ref" id="produtosRef">
+            <summary>Ver produtos disponíveis e preços</summary>
+            <div class="produtos-ref-tabela" id="produtosRefTabela">
+              <p style="color:var(--muted);padding:6px;">Carregando produtos...</p>
+            </div>
+          </details>
+
+          <div class="item-row-header">
+            <span>Produto</span>
+            <span>Qtd.</span>
+            <span>Preço Unit.</span>
+            <span>Subtotal</span>
+            <span></span>
+          </div>
+
           <div id="itemsContainer"></div>
           <button type="button" class="btn btn-secondary btn-small" id="btnAdicionarItem">
             + Adicionar Item
@@ -484,8 +551,37 @@
     let todosCestas = [];
     let itemCount = 0;
 
+    function atualizarPainelProdutos() {
+      const tabela = document.getElementById("produtosRefTabela");
+      if (!todosProdutos || todosProdutos.length === 0) {
+        tabela.innerHTML = '<p style="color:var(--muted);padding:6px;font-size:12px;">Nenhum produto disponível.</p>';
+        return;
+      }
+      tabela.innerHTML = todosProdutos
+        .map(p => `
+          <div class="produto-ref-linha">
+            <span>${p.nome}</span>
+            <span class="produto-ref-preco">${formatarMoeda(p.preco)}</span>
+          </div>`)
+        .join("");
+    }
+
+    function preencherSelectCestas() {
+      const selectCestas = document.getElementById("pedidoCestaId");
+      selectCestas.innerHTML =
+        '<option value="">Selecionar cesta...</option>' +
+        todosCestas
+          .map((c) => `<option value="${c.id}">${c.nome} - ${formatarMoeda(c.precoBase)}</option>`)
+          .join("");
+    }
+
     // Abrir modal para novo pedido
     btnNovoPedido.addEventListener("click", async () => {
+      if (localStorage.getItem("emailVerificado") !== "true") {
+        alert("Você precisa verificar seu e-mail antes de realizar pedidos.\nFaça login novamente para receber o código de verificação.");
+        return;
+      }
+
       pedidoAtual = null;
       itemCount = 0;
       document.getElementById("modalTitle").textContent = "Novo Pedido";
@@ -496,12 +592,8 @@
       todosProdutos = await carregarProdutos();
       todosCestas = await carregarCestas();
 
-      const selectCestas = document.getElementById("pedidoCestaId");
-      selectCestas.innerHTML =
-        '<option value="">Selecionar cesta...</option>' +
-        todosCestas
-          .map((c) => `<option value="${c.id}">${c.nome} - ${formatarMoeda(c.precoBase)}</option>`)
-          .join("");
+      preencherSelectCestas();
+      atualizarPainelProdutos();
 
       modal.style.display = "block";
     });
@@ -523,6 +615,11 @@
 
     // Adicionar item ao pedido
     btnAdicionarItem.addEventListener("click", () => {
+      if (todosProdutos.length === 0) {
+        alert("Nenhum produto disponível para adicionar.");
+        return;
+      }
+
       itemCount++;
       const selectProdutos = todosProdutos
         .map((p) => `<option value="${p.id}">${p.nome}</option>`)
@@ -537,7 +634,13 @@
           <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
         </div>
       `;
-      itemsContainer.innerHTML += itemHtml;
+      itemsContainer.insertAdjacentHTML("beforeend", itemHtml);
+
+      // Popula o preço automaticamente para o primeiro produto da lista
+      const novaLinha = document.getElementById(`item-${itemCount}`);
+      if (novaLinha) {
+        atualizarPreco(novaLinha.querySelector('select[name="produto"]'));
+      }
     });
 
     window.removerItem = (id) => {
@@ -690,12 +793,17 @@
       pedidoAtual = pedido;
       document.getElementById("modalTitle").textContent = "Editar Pedido";
       document.getElementById("pedidoClienteNome").value = pedido.clienteNome;
-      document.getElementById("pedidoCestaId").value = pedido.cestaId || "";
       document.getElementById("pedidoObservacoes").value = pedido.observacoes || "";
 
       itemCount = 0;
       itemsContainer.innerHTML = "";
+
       todosProdutos = await carregarProdutos();
+      todosCestas   = await carregarCestas();
+
+      preencherSelectCestas();
+      document.getElementById("pedidoCestaId").value = pedido.cestaId || "";
+      atualizarPainelProdutos();
 
       (pedido.itens || []).forEach((item) => {
         itemCount++;
@@ -717,7 +825,7 @@
             <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
           </div>
         `;
-        itemsContainer.innerHTML += itemHtml;
+        itemsContainer.insertAdjacentHTML("beforeend", itemHtml);
       });
 
       atualizarValorTotal();
