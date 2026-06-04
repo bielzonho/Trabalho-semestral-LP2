@@ -1,3 +1,4 @@
 .env
 supabase-config.js
 node_modules/
+docs/
