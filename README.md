@@ -1,131 +1,238 @@
 # Trabalho-semestral-LP2
-Trabalho semestral de linguagens de Programação 2 e Arquitetura de Sistemas Computacionais, com desenvolvimento backend e frontend, com Javascript e Typescript, tanto para Back End quanto para Front End.
 
-## 📦 Sistema de Cestas e Pedidos - Grão & Cesta
+Trabalho semestral de Linguagens de Programação 2 e Arquitetura de Sistemas Computacionais, com desenvolvimento backend e frontend em JavaScript e TypeScript.
 
-Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de clientes.
+## Sistema de Cestas e Pedidos — Grão & Cesta
 
-### 🏗️ Arquitetura
+Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de clientes, com autenticação JWT, verificação de e-mail por OTP e controle de estoque.
 
-- **3 Microserviços independentes** (Express + TypeScript)
-  - Produtos (porta 3012)
-  - Cestas (porta 3010)
-  - Pedidos (porta 3011)
-  
-- **Frontend SPA** (HTML5 + CSS3 + JavaScript)
-  - Página de Produtos com CRUD completo
-  - Página de Cestas com gerenciamento de itens
-  - Página de Pedidos com itens e status
+---
 
-### 🚀 Quick Start
+## Arquitetura
 
-1. **Instalar dependências:**
+**5 microserviços independentes** (Express + TypeScript) + Frontend estático:
+
+| Serviço | Porta | Responsabilidade |
+|---|---|---|
+| Catálogo de Cestas | 3010 | CRUD de cestas |
+| Pedidos | 3011 | Criação e gestão de pedidos + controle de estoque |
+| Produtos | 3012 | CRUD de produtos com quantidade em estoque |
+| Autenticação | 3013 | Login, registro de usuários, tokens JWT |
+| Verificação de E-mail | 3014 | OTP por e-mail para confirmar acesso |
+
+**Frontend** (HTML5 + CSS3 + JavaScript):
+
+| Página | Acesso | Descrição |
+|---|---|---|
+| `index.html` | Cliente | Catálogo de cestas, catálogo de produtos, novo pedido, meus pedidos |
+| `login.html` | Público | Login com verificação OTP, criação de conta |
+| `pedidos.html` | Admin | Gestão completa de pedidos e status |
+| `produtos.html` | Admin | CRUD de produtos e estoque |
+| `cestas.html` | Admin | CRUD de cestas |
+| `admin.html` | Admin | Painel administrativo |
+
+---
+
+## Quick Start
+
+### 1. Configurar variáveis de ambiente
+
+Copie e edite o arquivo `.env` na raiz do projeto:
+
+```env
+DB_URL=https://<projeto>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<chave>
+JWT_SECRET=<segredo>
+
+# SMTP para envio de e-mail OTP (opcional — sem isso, o código aparece no terminal)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu@gmail.com
+SMTP_PASS=senha_de_app_do_gmail
+```
+
+> **Sem SMTP configurado:** o código OTP é exibido no terminal do serviço 3014 para uso em desenvolvimento.
+
+### 2. Instalar dependências
+
 ```bash
 npm install
 npm run install:services
 ```
 
-2. **Executar microserviços**:
+### 3. Iniciar todos os microserviços
+
 ```bash
 npm run dev
 ```
 
-Esse comando inicia os três servidores:
-- Produtos: `http://localhost:3012`
+Sobe os 5 serviços simultaneamente:
 - Cestas: `http://localhost:3010`
 - Pedidos: `http://localhost:3011`
+- Produtos: `http://localhost:3012`
+- Auth: `http://localhost:3013`
+- Verificação de e-mail: `http://localhost:3014`
 
-3. **Abrir Frontend:**
-Abra em um navegador:
-- `front/produtos.html` - Gerenciar Produtos
-- `front/cestas.html` - Gerenciar Cestas
-- `front/pedidos.html` - Gerenciar Pedidos
+### 4. Abrir o frontend
 
-### 📋 Tabelas do Banco de Dados
+Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equivalente.
+
+---
+
+## Fluxo de uso
+
+### Cliente
+1. Acessa `login.html` → faz login ou cria conta
+2. Recebe código OTP por e-mail (ou vê no terminal em dev) → confirma
+3. Em `index.html`: vê o catálogo de cestas e produtos disponíveis
+4. Adiciona produtos extras ao pedido e envia
+5. Acompanha seus pedidos na seção "Meus pedidos"
+
+### Admin
+1. Faz login → redirecionado para `admin.html`
+2. Gerencia pedidos em `pedidos.html` (atualizar status, editar, deletar)
+3. Ao confirmar/entregar um pedido, o estoque dos produtos é decrementado automaticamente
+4. Gerencia produtos em `produtos.html` e cestas em `cestas.html`
+
+---
+
+## API Endpoints
+
+### Auth — `http://localhost:3013`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/auth/login` | Público | Login com e-mail e senha |
+| POST | `/auth/registrar` | Público | Criar nova conta (perfil cliente) |
+| GET | `/auth/me` | Autenticado | Verificar token |
+
+### Verificação de E-mail — `http://localhost:3014`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/verificacao/enviar` | Público | Gera e envia OTP (10 min de validade) |
+| POST | `/verificacao/confirmar` | Público | Valida o OTP |
+
+### Produtos — `http://localhost:3012`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/produtos` | Público | Listar todos os produtos |
+| GET | `/produtos/ativos` | Público | Listar produtos com estoque > 0 |
+| GET | `/produtos/:id` | Público | Detalhe de um produto |
+| POST | `/produtos` | Admin | Criar produto |
+| PUT | `/produtos/:id` | Admin | Atualizar produto |
+| DELETE | `/produtos/:id` | Admin | Remover produto |
+
+### Cestas — `http://localhost:3010`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/cestas` | Público | Listar todas as cestas |
+| GET | `/cestas/:id` | Público | Detalhe de uma cesta |
+| POST | `/cestas` | Admin | Criar cesta |
+| PUT | `/cestas/:id` | Admin | Atualizar cesta |
+| DELETE | `/cestas/:id` | Admin | Remover cesta |
+
+### Pedidos — `http://localhost:3011`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/pedidos` | Admin | Listar todos os pedidos |
+| GET | `/pedidos/meus` | Autenticado | Listar pedidos do usuário logado |
+| GET | `/pedidos/:id` | Admin | Detalhe de um pedido |
+| POST | `/pedidos` | Cliente | Criar pedido |
+| PUT | `/pedidos/:id` | Admin | Atualizar pedido |
+| PATCH | `/pedidos/:id/status` | Admin | Alterar status (decrementa estoque ao confirmar/entregar) |
+| DELETE | `/pedidos/:id` | Admin | Remover pedido |
+
+---
+
+## Tabelas do Banco de Dados (Supabase)
 
 ```sql
--- Produtos disponíveis
-CREATE TABLE produtos (
-  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  nome VARCHAR(150) NOT NULL,
-  descricao TEXT NOT NULL,
-  preco NUMERIC(10,2) NOT NULL,
-  ativo BOOLEAN DEFAULT TRUE,
-  criado_em TIMESTAMPTZ DEFAULT NOW()
+-- Produtos com controle de estoque
+CREATE TABLE itens (
+  id               BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  titulo           VARCHAR(150) NOT NULL,
+  descricao        TEXT,
+  preco            NUMERIC(10,2) NOT NULL,
+  quantidade_estoque INTEGER DEFAULT 0,
+  quantidade_vendas  INTEGER DEFAULT 0
 );
 
--- Cestas (modelos prontos)
+-- Cestas de café da manhã
 CREATE TABLE cestas (
-  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  nome VARCHAR(150) NOT NULL,
-  descricao TEXT NOT NULL,
-  preco_base NUMERIC(10,2) NOT NULL,
-  ativa BOOLEAN DEFAULT TRUE,
-  criado_em TIMESTAMPTZ DEFAULT NOW()
+  id          BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  nome        VARCHAR(150) NOT NULL,
+  descricao   TEXT,
+  preco_base  NUMERIC(10,2) NOT NULL,
+  ativa       BOOLEAN DEFAULT TRUE,
+  criado_em   TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Itens das cestas
+-- Itens de cada cesta
 CREATE TABLE cesta_itens (
-  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  cesta_id BIGINT REFERENCES cestas(id) ON DELETE CASCADE,
-  produto_id BIGINT REFERENCES produtos(id),
-  quantidade INTEGER NOT NULL,
+  id         BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  cesta_id   BIGINT REFERENCES cestas(id) ON DELETE CASCADE,
+  item_id    BIGINT REFERENCES itens(id),
+  quantidade INTEGER NOT NULL
+);
+
+-- Carrinhos (agrupa itens adicionais de um pedido)
+CREATE TABLE carrinhos (
+  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cesta_id  BIGINT REFERENCES cestas(id),
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Pedidos dos clientes
-CREATE TABLE pedidos (
-  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  cesta_id BIGINT REFERENCES cestas(id),
-  cliente_nome VARCHAR(150) NOT NULL,
-  status VARCHAR(30) NOT NULL DEFAULT 'pendente',
-  valor_total NUMERIC(10,2) NOT NULL,
-  observacoes TEXT,
-  criado_em TIMESTAMPTZ DEFAULT NOW()
+-- Itens adicionais do carrinho
+CREATE TABLE carrinho_itens_adicionais (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  carrinho_id UUID REFERENCES carrinhos(id) ON DELETE CASCADE,
+  item_id     BIGINT REFERENCES itens(id),
+  quantidade  INTEGER NOT NULL DEFAULT 1
 );
 
--- Itens de cada pedido
-CREATE TABLE pedido_itens (
-  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  pedido_id BIGINT REFERENCES pedidos(id) ON DELETE CASCADE,
-  produto_id BIGINT REFERENCES produtos(id),
-  quantidade INTEGER NOT NULL,
-  preco_unitario NUMERIC(10,2) NOT NULL,
-  criado_em TIMESTAMPTZ DEFAULT NOW()
+-- Vendas / Pedidos
+CREATE TABLE vendas_cestas (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cesta_id         BIGINT REFERENCES cestas(id),
+  carrinho_id      UUID REFERENCES carrinhos(id),
+  cliente_nome     VARCHAR(150),
+  cliente_telefone VARCHAR(50),
+  endereco_entrega TEXT,
+  observacoes      TEXT,
+  status           VARCHAR(30) DEFAULT 'pendente',
+  preco_pago       NUMERIC(10,2) NOT NULL,
+  pago             BOOLEAN DEFAULT FALSE,
+  data_venda       TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Códigos OTP para verificação de e-mail
+CREATE TABLE verificacoes_email (
+  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email     TEXT NOT NULL,
+  codigo    VARCHAR(6) NOT NULL,
+  expira_em TIMESTAMPTZ NOT NULL,
+  usado     BOOLEAN NOT NULL DEFAULT FALSE,
+  criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_verificacoes_email
+  ON verificacoes_email (email, codigo, usado, expira_em);
 ```
 
-### 🔌 API Endpoints
+---
 
-**Produtos:**
-- `GET /produtos` - Listar todos
-- `POST /produtos` - Criar
-- `PUT /produtos/:id` - Atualizar
-- `DELETE /produtos/:id` - Deletar
+## Controle de Estoque
 
-**Cestas:**
-- `GET /cestas` - Listar todas
-- `POST /cestas` - Criar
-- `PUT /cestas/:id` - Atualizar
-- `POST /cestas/:id/itens` - Adicionar item
-- `DELETE /cestas/:id/itens/:itemId` - Remover item
+Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de pedidos decrementa automaticamente `quantidade_estoque` de cada produto do carrinho. A transição `confirmado → entregue` não decrementa novamente.
 
-**Pedidos:**
-- `GET /pedidos` - Listar todos
-- `POST /pedidos` - Criar
-- `PUT /pedidos/:id` - Atualizar
-- `PATCH /pedidos/:id/status` - Alterar status
-- `POST /pedidos/:id/itens` - Adicionar item
-- `DELETE /pedidos/:id/itens/:itemId` - Remover item
+---
 
-### 📖 Documentação Completa
+## Integrantes
 
-Veja [SETUP.md](SETUP.md) para guia completo de instalação e uso.
-
-# Integrantes:
-André Freire Prino - 21.00476-5
-Joaquim Anderlini Alves da Cunha - 22.00536-6
-Gabriel Giardino Sprotte - 23.00964-0
-Gabriel Fernandes Sabino - 23.01062-2
-Guilherme Gonsales de Sá - 23.00882-2
-Thiago Espigado Miras - 22.01836-0
+| Nome | RA |
+|---|---|
+| André Freire Prino | 21.00476-5 |
+| Joaquim Anderlini Alves da Cunha | 22.00536-6 |
+| Gabriel Giardino Sprotte | 23.00964-0 |
+| Gabriel Fernandes Sabino | 23.01062-2 |
+| Guilherme Gonsales de Sá | 23.00882-2 |
+| Thiago Espigado Miras | 22.01836-0 |
