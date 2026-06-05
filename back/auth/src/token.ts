@@ -7,6 +7,7 @@ const JWT_EXPIRY = "8h";
 export interface TokenPayload {
   sub: string;
   nome: string;
+  email: string;
   perfil: Perfil;
 }
 

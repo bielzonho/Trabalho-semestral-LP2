@@ -330,9 +330,22 @@
       margin-top: 0;
     }
 
+    .item-row-header {
+      display: grid;
+      grid-template-columns: 1fr 90px auto;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
     .item-row {
       display: grid;
-      grid-template-columns: 1fr 100px 60px auto;
+      grid-template-columns: 1fr 90px auto;
       gap: 8px;
       align-items: center;
       margin-bottom: 8px;
@@ -348,6 +361,21 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       font-size: 12px;
+    }
+
+    .card-item-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 13px;
+      border-bottom: 1px solid #f0ece4;
+    }
+
+    .card-item-line:last-child { border-bottom: none; }
+
+    .card-item-preco {
+      font-weight: 700;
+      color: var(--gold);
     }
 
     .modal-actions {
@@ -426,6 +454,13 @@
 
         <div class="items-section">
           <h4>Itens da Cesta</h4>
+
+          <div class="item-row-header">
+            <span>Produto</span>
+            <span>Quantidade</span>
+            <span></span>
+          </div>
+
           <div id="itemsContainer"></div>
           <button type="button" class="btn btn-secondary btn-small" id="btnAdicionarItem">
             + Adicionar Item
@@ -487,11 +522,14 @@
 
     // Adicionar item à cesta
     btnAdicionarItem.addEventListener("click", () => {
+      if (todosProdutos.length === 0) {
+        alert("Nenhum produto disponível para adicionar.");
+        return;
+      }
+
       itemCount++;
       const selectProdutos = todosProdutos
-        .map(
-          (p) => `<option value="${p.id}">${p.nome} - ${formatarMoeda(p.preco)}</option>`
-        )
+        .map((p) => `<option value="${p.id}">${p.nome} — ${formatarMoeda(p.preco)}</option>`)
         .join("");
 
       const itemHtml = `
@@ -501,7 +539,7 @@
           <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
         </div>
       `;
-      itemsContainer.innerHTML += itemHtml;
+      itemsContainer.insertAdjacentHTML("beforeend", itemHtml);
     });
 
     window.removerItem = (id) => {
@@ -568,17 +606,17 @@
 
         listaCestas.innerHTML = cestasFiltradas
           .map((cesta) => {
-            const itensHtml = (cesta.itens || [])
-              .map((item) => {
-                const produto = todosProdutos.find((p) => p.id === item.produtoId);
-                return `
-              <div class="card-item-line">
-                <span>${produto?.nome || "Produto não encontrado"}</span>
-                <span>Qty: ${item.quantidade}</span>
-              </div>
-            `;
-              })
-              .join("");
+            const itens = cesta.itens || [];
+            const itensHtml = itens.length > 0
+              ? itens.map((item) => {
+                  const produto = todosProdutos.find((p) => p.id === item.produtoId);
+                  return `
+                <div class="card-item-line">
+                  <span>${produto?.nome || "Produto não encontrado"}</span>
+                  <span class="card-item-preco">${produto ? formatarMoeda(produto.preco) : "—"}</span>
+                </div>`;
+                }).join("")
+              : `<p style="color:var(--muted);font-size:12px;margin:4px 0;">Nenhum item definido</p>`;
 
             return `
             <div class="card">
@@ -589,8 +627,15 @@
                 </span>
               </div>
               <p class="card-description">${cesta.descricao || "Sem descrição"}</p>
-              <div class="card-price">Base: ${formatarMoeda(cesta.precoBase)}</div>
-              ${itensHtml ? `<div class="card-itens">${itensHtml}</div>` : ""}
+              <div class="card-price">Preço base: ${formatarMoeda(cesta.precoBase)}</div>
+              <div class="card-itens">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <strong style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">
+                    Itens padrão (${itens.length})
+                  </strong>
+                </div>
+                ${itensHtml}
+              </div>
               <div class="card-footer">
                 <div></div>
                 <div class="card-actions">
@@ -598,8 +643,7 @@
                   <button class="btn btn-danger btn-small" onclick="confirmarDelecao('${cesta.id}', '${cesta.nome}')">Deletar</button>
                 </div>
               </div>
-            </div>
-          `;
+            </div>`;
           })
           .join("");
       } catch (erro) {
@@ -625,7 +669,7 @@
       (cesta.itens || []).forEach((item) => {
         itemCount++;
         const selectProdutos = todosProdutos
-          .map((p) => `<option value="${p.id}" ${item.produtoId === p.id ? "selected" : ""}>${p.nome} - ${formatarMoeda(p.preco)}</option>`)
+          .map((p) => `<option value="${p.id}" ${item.produtoId === p.id ? "selected" : ""}>${p.nome} — ${formatarMoeda(p.preco)}</option>`)
           .join("");
 
         const itemHtml = `
@@ -635,7 +679,7 @@
             <button type="button" class="btn btn-danger btn-small" onclick="removerItem(${itemCount})">Remover</button>
           </div>
         `;
-        itemsContainer.innerHTML += itemHtml;
+        itemsContainer.insertAdjacentHTML("beforeend", itemHtml);
       });
 
       modal.style.display = "block";
