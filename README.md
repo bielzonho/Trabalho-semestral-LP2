@@ -90,9 +90,9 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 
 ### Admin
 1. Faz login → redirecionado para `admin.html`
-2. Gerencia pedidos em `pedidos.html` (atualizar status, editar, deletar)
-3. Ao confirmar/entregar um pedido, o estoque dos produtos é decrementado automaticamente
-4. Gerencia produtos em `produtos.html` e cestas em `cestas.html`
+2. Gerencia produtos, cestas (com itens padrão) e pedidos direto no painel `admin.html`
+3. Ao confirmar/entregar um pedido, o estoque e o contador de vendas dos produtos são atualizados automaticamente
+4. Páginas dedicadas: `produtos.html`, `cestas.html` e `pedidos.html`
 
 ---
 
@@ -124,11 +124,13 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 ### Cestas — `http://localhost:3010`
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| GET | `/cestas` | Público | Listar todas as cestas |
+| GET | `/cestas` | Público | Listar todas as cestas (com itens) |
 | GET | `/cestas/:id` | Público | Detalhe de uma cesta |
 | POST | `/cestas` | Admin | Criar cesta |
-| PUT | `/cestas/:id` | Admin | Atualizar cesta |
+| PUT | `/cestas/:id` | Admin | Atualizar cesta e/ou seus itens padrão |
+| POST | `/cestas/:id/itens` | Admin | Adicionar item à cesta |
 | DELETE | `/cestas/:id` | Admin | Remover cesta |
+| DELETE | `/cestas/:cestaId/itens/:itemId` | Admin | Remover item da cesta |
 
 ### Pedidos — `http://localhost:3011`
 | Método | Rota | Acesso | Descrição |
@@ -189,20 +191,37 @@ CREATE TABLE carrinho_itens_adicionais (
   quantidade  INTEGER NOT NULL DEFAULT 1
 );
 
+-- Usuários cadastrados pelo sistema de registro
+CREATE TABLE users (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL,
+  email      TEXT UNIQUE NOT NULL,
+  password   TEXT NOT NULL,  -- hash bcrypt
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Vendas / Pedidos
 CREATE TABLE vendas_cestas (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cesta_id         BIGINT REFERENCES cestas(id),
   carrinho_id      UUID REFERENCES carrinhos(id),
   cliente_nome     VARCHAR(150),
+  email_cliente    TEXT,
   cliente_telefone VARCHAR(50),
   endereco_entrega TEXT,
   observacoes      TEXT,
   status           VARCHAR(30) DEFAULT 'pendente',
   preco_pago       NUMERIC(10,2) NOT NULL,
   pago             BOOLEAN DEFAULT FALSE,
-  data_venda       TIMESTAMPTZ DEFAULT NOW()
+  data_venda       TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT check_cliente_telefone
+    CHECK (cliente_telefone IS NULL OR cliente_telefone ~ '^[0-9]+$')
 );
+
+-- Migrações necessárias se a tabela já existir:
+-- ALTER TABLE vendas_cestas ADD COLUMN IF NOT EXISTS email_cliente TEXT;
+-- ALTER TABLE vendas_cestas ADD CONSTRAINT check_cliente_telefone
+--   CHECK (cliente_telefone IS NULL OR cliente_telefone ~ '^[0-9]+$');
 
 -- Códigos OTP para verificação de e-mail
 CREATE TABLE verificacoes_email (
@@ -222,7 +241,29 @@ CREATE INDEX idx_verificacoes_email
 
 ## Controle de Estoque
 
-Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de pedidos decrementa automaticamente `quantidade_estoque` de cada produto do carrinho. A transição `confirmado → entregue` não decrementa novamente.
+Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de pedidos atualiza automaticamente cada produto do carrinho:
+- Decrementa `quantidade_estoque` pela quantidade pedida (mínimo 0)
+- Incrementa `quantidade_vendas` pela quantidade vendida
+
+A transição `confirmado → entregue` não aplica o decremento novamente.
+
+No frontend, produtos com estoque 0 aparecem como **"Indisponível"** e não podem ser adicionados ao pedido. Produtos com menos de 10 unidades exibem o badge **"Restam X"**.
+
+---
+
+## Segurança
+
+| Camada | Implementação |
+|---|---|
+| Headers HTTP | `helmet` em todos os microserviços |
+| CORS | Origin whitelist restrita (`localhost:5500`) |
+| Autenticação | JWT com expiração de 8h, verificado em cada requisição |
+| Autorização | RBAC — roles `admin` e `cliente` |
+| Senhas | `bcryptjs` com salt 10 (nunca texto puro) |
+| SQL Injection | Supabase ORM com queries parametrizadas |
+| Payload | Limite de 100kb por requisição |
+| OTP | Código de 6 dígitos com validade de 10 min, uso único |
+| Telefone | Validação frontend + constraint no banco (somente dígitos) |
 
 ---
 
