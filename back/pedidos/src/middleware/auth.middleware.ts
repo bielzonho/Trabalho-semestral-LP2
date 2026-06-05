@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "grao_cesta_jwt_secret_lp2_2025";
 export interface UsuarioToken {
   sub: string;
   nome: string;
+  email: string;
   perfil: "admin" | "cliente";
 }
 

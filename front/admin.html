@@ -271,6 +271,60 @@
 
     /* PEDIDOS STATUS SELECT */
     .select-status { padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
+
+    /* ITENS DA CESTA */
+    .item-admin-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      background: #fdf5e6;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .item-admin-row select {
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 13px;
+      background: #fff;
+      width: 100%;
+    }
+    .itens-header-modal {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .btn-add-item-admin {
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px;
+      background: #f0e6d8;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-add-item-admin:hover { background: var(--border); color: var(--text); }
+    .itens-chip {
+      display: inline-block;
+      background: #f0e6d8;
+      color: var(--text);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin: 2px 2px 2px 0;
+      border: 1px solid var(--border);
+    }
+    .btn-acao.btn-itens { background: #f0e6d8; color: var(--gold-dark); }
+    .btn-acao.btn-itens:hover { background: #e0d0b8; }
   </style>
 </head>
 <body>
@@ -330,7 +384,7 @@
             <tr>
               <th>Nome</th>
               <th>Preço</th>
-              <th>Total de Itens</th>
+              <th>Itens Padrão</th>
               <th>Vendas</th>
               <th>Ações</th>
             </tr>
@@ -418,6 +472,25 @@
     </div>
   </div>
 
+  <!-- ===== MODAL ITENS DA CESTA ===== -->
+  <div id="modalItens" class="modal-overlay">
+    <div class="modal" style="max-width:540px;">
+      <h3>Itens de: <span id="cestaItensNome" style="color:var(--gold)"></span></h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+        Selecione os produtos que fazem parte desta cesta por padrão.
+      </p>
+      <div class="itens-header-modal">Produto</div>
+      <div id="itensModalContainer"></div>
+      <button type="button" class="btn-add-item-admin" onclick="adicionarItemAdmin()">
+        + Adicionar produto
+      </button>
+      <div class="modal-acoes">
+        <button class="btn-cancelar" onclick="fecharModalItens()">Cancelar</button>
+        <button class="btn-salvar" onclick="salvarItensAdmin()">Salvar Itens</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== MODAL STATUS PEDIDO ===== -->
   <div id="modalStatus" class="modal-overlay">
     <div class="modal">
@@ -447,9 +520,12 @@
   <script src="api.js"></script>
   <script>
     // API_PRODUTOS, API_CESTAS, API_PEDIDOS já definidos em api.js
-    let produtoEditandoId = null;
-    let cestaEditandoId = null;
-    let pedidoStatusId = null;
+    let produtoEditandoId  = null;
+    let cestaEditandoId    = null;
+    let cestaItensId       = null;
+    let pedidoStatusId     = null;
+    let produtosAdminCache = [];
+    let itemAdminCount     = 0;
 
     // ============================================================
     // AUTENTICAÇÃO
@@ -643,30 +719,43 @@
 
       try {
         const token = localStorage.getItem("token");
-        const resp = await fetch(API_CESTAS, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const cestas = await resp.json();
+        const [respCestas, respProdutos] = await Promise.all([
+          fetch(API_CESTAS,   { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(API_PRODUTOS, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+
+        const cestas   = await respCestas.json();
+        produtosAdminCache = await respProdutos.json();
 
         if (!cestas.length) {
           tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Nenhuma cesta cadastrada.</p></div></td></tr>`;
           return;
         }
 
-        tbody.innerHTML = cestas.map(c => `
+        tbody.innerHTML = cestas.map(c => {
+          const itens = c.itens || [];
+          const itensHtml = itens.length > 0
+            ? itens.map(item => {
+                const p = produtosAdminCache.find(p => p.id === item.produtoId);
+                return `<span class="itens-chip">${p?.nome || "?"}</span>`;
+              }).join("")
+            : `<span style="color:var(--muted);font-size:12px;">Sem itens</span>`;
+
+          return `
           <tr>
             <td><strong>${c.nome}</strong></td>
-            <td>${formatarMoeda(c.preco)}</td>
-            <td>${c.totalItens ?? 0}</td>
+            <td>${formatarMoeda(c.preco ?? c.precoBase)}</td>
+            <td>${itensHtml}</td>
             <td>${c.quantidadeVendas ?? 0}</td>
             <td>
               <div class="acoes">
                 <button class="btn-acao btn-editar" onclick="editarCesta('${c.id}')">Editar</button>
-                <button class="btn-acao btn-excluir" onclick="excluirCesta('${c.id}', '${c.nome}')">Excluir</button>
+                <button class="btn-acao btn-itens"  onclick="abrirModalItens('${c.id}', '${c.nome.replace(/'/g,"\\'")}')">Itens</button>
+                <button class="btn-acao btn-excluir" onclick="excluirCesta('${c.id}', '${c.nome.replace(/'/g,"\\'")}')">Excluir</button>
               </div>
             </td>
-          </tr>
-        `).join("");
+          </tr>`;
+        }).join("");
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5"><div class="vazio"><p>Erro ao carregar cestas.</p></div></td></tr>`;
       }
@@ -751,6 +840,89 @@
         carregarCestas();
       } catch {
         mostrarToast("Erro ao excluir cesta.", "erro");
+      }
+    }
+
+    // ── Gerenciar Itens da Cesta ─────────────────────────────
+
+    async function abrirModalItens(cestaId, cestaNome) {
+      cestaItensId   = cestaId;
+      itemAdminCount = 0;
+      document.getElementById("cestaItensNome").textContent = cestaNome;
+      document.getElementById("itensModalContainer").innerHTML = "";
+
+      // Garante que os produtos estejam carregados
+      if (!produtosAdminCache.length) {
+        const token = localStorage.getItem("token");
+        const r = await fetch(API_PRODUTOS, { headers: { Authorization: `Bearer ${token}` } });
+        produtosAdminCache = await r.json();
+      }
+
+      // Carrega itens atuais da cesta
+      try {
+        const token = localStorage.getItem("token");
+        const r = await fetch(`${API_CESTAS}/${cestaId}`, { headers: { Authorization: `Bearer ${token}` } });
+        const cesta = await r.json();
+
+        (cesta.itens || []).forEach(item => {
+          _adicionarLinhaItemAdmin(item.produtoId);
+        });
+      } catch {
+        mostrarToast("Erro ao carregar itens.", "erro");
+      }
+
+      document.getElementById("modalItens").classList.add("aberto");
+    }
+
+    function fecharModalItens() {
+      document.getElementById("modalItens").classList.remove("aberto");
+    }
+
+    function _adicionarLinhaItemAdmin(produtoIdSelecionado) {
+      itemAdminCount++;
+      const id   = itemAdminCount;
+      const opts = produtosAdminCache
+        .map(p => `<option value="${p.id}" ${p.id === produtoIdSelecionado ? "selected" : ""}>
+          ${p.nome} — ${formatarMoeda(p.preco)}
+        </option>`)
+        .join("");
+
+      document.getElementById("itensModalContainer").insertAdjacentHTML("beforeend", `
+        <div class="item-admin-row" id="iadmin-${id}">
+          <select>${opts}</select>
+          <button type="button" class="btn-acao btn-excluir"
+            onclick="document.getElementById('iadmin-${id}').remove()"
+            style="white-space:nowrap;">Remover</button>
+        </div>`);
+    }
+
+    function adicionarItemAdmin() {
+      if (!produtosAdminCache.length) {
+        mostrarToast("Nenhum produto disponível.", "erro");
+        return;
+      }
+      _adicionarLinhaItemAdmin(produtosAdminCache[0].id);
+    }
+
+    async function salvarItensAdmin() {
+      const linhas  = document.querySelectorAll("#itensModalContainer .item-admin-row");
+      const itens   = Array.from(linhas).map(row => ({
+        produtoId: row.querySelector("select").value
+      }));
+
+      const token = localStorage.getItem("token");
+      try {
+        const resp = await fetch(`${API_CESTAS}/${cestaItensId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ itens })
+        });
+        if (!resp.ok) throw new Error((await resp.json()).mensagem);
+        fecharModalItens();
+        mostrarToast("Itens salvos com sucesso!");
+        carregarCestas();
+      } catch (err) {
+        mostrarToast(err.message || "Erro ao salvar itens.", "erro");
       }
     }
 

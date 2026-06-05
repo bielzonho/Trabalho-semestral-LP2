@@ -100,18 +100,18 @@ async function decrementarEstoque(carrinhoId: string): Promise<void> {
   for (const item of itensCarrinho as { item_id: string; quantidade: number }[]) {
     const { data: produto } = await supabase
       .from("itens")
-      .select("quantidade_estoque")
+      .select("quantidade_estoque, quantidade_vendas")
       .eq("id", item.item_id)
       .single();
 
     if (!produto) continue;
 
-    const estoqueAtual = Number(produto.quantidade_estoque) || 0;
-    const novoEstoque  = Math.max(0, estoqueAtual - item.quantidade);
-
     await supabase
       .from("itens")
-      .update({ quantidade_estoque: novoEstoque })
+      .update({
+        quantidade_estoque: Math.max(0, (Number(produto.quantidade_estoque) || 0) - item.quantidade),
+        quantidade_vendas:  (Number(produto.quantidade_vendas)  || 0) + item.quantidade
+      })
       .eq("id", item.item_id);
   }
 }
@@ -159,18 +159,18 @@ async function buscarPedido(id: string) {
   return mapPedido(venda, itens);
 }
 
-// GET /pedidos/meus — cliente autenticado vê só os próprios pedidos
+// GET /pedidos/meus — cliente autenticado vê só os próprios pedidos (filtrado por email)
 router.get("/meus", requireAuth, async (req: Request, res: Response) => {
-  const nomeCliente = req.usuario?.nome;
+  const emailCliente = req.usuario?.email;
 
-  if (!nomeCliente) {
+  if (!emailCliente) {
     return res.status(401).json({ mensagem: "Usuário não identificado." });
   }
 
   const { data, error } = await supabase
     .from("vendas_cestas")
     .select("*")
-    .ilike("cliente_nome", nomeCliente)
+    .eq("email_cliente", emailCliente)
     .order("data_venda", { ascending: false });
 
   if (error) return handleSupabaseError(res, error);
@@ -267,6 +267,7 @@ router.post("/", requireAuth, requireRole("cliente"), async (req: Request, res: 
       cesta_id: cestaId,
       carrinho_id: carrinho.id,
       cliente_nome: clienteNome || req.usuario?.nome || "Cliente",
+      email_cliente: req.usuario?.email || null,
       cliente_telefone: clienteTelefone || telefone || null,
       endereco_entrega: enderecoEntrega || null,
       observacoes: observacoes || null,

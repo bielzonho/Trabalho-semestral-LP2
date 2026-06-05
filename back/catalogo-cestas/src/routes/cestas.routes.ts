@@ -215,27 +215,37 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
     ...(precoFinal !== undefined && { preco: precoFinal })
   };
 
-  const { data: cesta, error: cestaError } = await supabase
-    .from("cestas")
-    .update(payload)
-    .eq("id", id)
-    .select("*")
-    .maybeSingle();
+  // Só atualiza o registro da cesta se houver campos para alterar
+  if (Object.keys(payload).length > 0) {
+    const { data: cesta, error: cestaError } = await supabase
+      .from("cestas")
+      .update(payload)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
 
-  if (cestaError) return handleSupabaseError(res, cestaError);
-  if (!cesta) return res.status(404).json({ mensagem: "Cesta não encontrada." });
+    if (cestaError) return handleSupabaseError(res, cestaError);
+    if (!cesta) return res.status(404).json({ mensagem: "Cesta não encontrada." });
+  } else {
+    // Sem campos a atualizar — só verifica se a cesta existe
+    const { data: existe } = await supabase
+      .from("cestas").select("id").eq("id", id).maybeSingle();
+    if (!existe) return res.status(404).json({ mensagem: "Cesta não encontrada." });
+  }
 
-  if (itens && itens.length > 0) {
+  if (itens !== undefined && itens !== null) {
+    // Remove todos os itens atuais e reinsere os novos (inclusive array vazio = remover tudo)
     const { error: deleteError } = await supabase.from("cesta_itens").delete().eq("cesta_id", id);
     if (deleteError) return handleSupabaseError(res, deleteError);
 
-    const itensPayload = itens.map((item: Omit<CestaItem, "id" | "cestaId" | "criadoEm">) => ({
-      cesta_id: id,
-      item_id: item.produtoId
-    }));
-
-    const { error: insertError } = await supabase.from("cesta_itens").insert(itensPayload);
-    if (insertError) return handleSupabaseError(res, insertError);
+    if (itens.length > 0) {
+      const itensPayload = itens.map((item: Omit<CestaItem, "id" | "cestaId" | "criadoEm">) => ({
+        cesta_id: id,
+        item_id: item.produtoId
+      }));
+      const { error: insertError } = await supabase.from("cesta_itens").insert(itensPayload);
+      if (insertError) return handleSupabaseError(res, insertError);
+    }
 
     await atualizarTotalItens(String(id));
   }
