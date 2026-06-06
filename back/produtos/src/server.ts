@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import produtosRoutes from "./routes/produtos.routes";
+import eventosRoutes  from "./routes/eventos.routes";
 
 const app = express();
 const PORT = 3012;
@@ -23,6 +24,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use("/produtos", produtosRoutes);
+app.use("/eventos",  eventosRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

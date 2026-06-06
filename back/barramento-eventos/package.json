@@ -1,7 +1,7 @@
 {
-  "name": "pedidos",
+  "name": "barramento-eventos",
   "version": "1.0.0",
-  "description": "Microserviço de carrinhos e vendas de cestas",
+  "description": "Barramento de eventos — recebe, armazena e faz broadcast para todos os microsserviços",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -9,18 +9,15 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0",
     "axios": "^1.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
-    "helmet": "^8.0.0",
-    "jsonwebtoken": "^9.0.2"
+    "helmet": "^8.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
-    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.10",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2"

@@ -1,8 +1,11 @@
 import { Router, Request, Response } from "express";
+import axios from "axios";
 import { supabase } from "../database";
 import { Pedido, PedidoItem, StatusPedido } from "../types/pedido";
 import { requireAuth } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/roles.middleware";
+
+const BARRAMENTO = "http://localhost:3015/eventos";
 
 const router = Router();
 
@@ -76,10 +79,13 @@ function handleSupabaseError(res: Response, error: { message: string }) {
   });
 }
 
-// Status que indicam que o pedido foi efetivado (só decrementa na primeira vez)
+// ── Barramento de eventos (apostila seção 4.3.27) ────────────────
+// O serviço de pedidos EMITE eventos; o serviço de produtos REAGE a eles.
+// Isso remove o acesso cruzado de banco entre domínios.
+
 const STATUS_EFETIVADO: StatusPedido[] = ["confirmado", "entregue"];
 
-function deveDecrementarEstoque(
+function deveEmitirEvento(
   statusAnterior: StatusPedido | null | undefined,
   novoStatus: StatusPedido
 ): boolean {
@@ -89,31 +95,31 @@ function deveDecrementarEstoque(
   );
 }
 
-async function decrementarEstoque(carrinhoId: string): Promise<void> {
+async function emitirEventoPedidoEfetivado(
+  pedidoId: string,
+  carrinhoId: string,
+  status: StatusPedido
+): Promise<void> {
+  // Busca os itens do carrinho ANTES de emitir (dados ficam no evento)
   const { data: itensCarrinho } = await supabase
     .from("carrinho_itens_adicionais")
     .select("item_id, quantidade")
     .eq("carrinho_id", carrinhoId);
 
-  if (!itensCarrinho || itensCarrinho.length === 0) return;
+  const itens = (itensCarrinho || []).map(
+    (i: { item_id: string; quantidade: number }) => ({
+      itemId: String(i.item_id),
+      quantidade: Number(i.quantidade)
+    })
+  );
 
-  for (const item of itensCarrinho as { item_id: string; quantidade: number }[]) {
-    const { data: produto } = await supabase
-      .from("itens")
-      .select("quantidade_estoque, quantidade_vendas")
-      .eq("id", item.item_id)
-      .single();
+  const evento = {
+    tipo: "PedidoEfetivado",
+    dados: { pedidoId, status, itens }
+  };
 
-    if (!produto) continue;
-
-    await supabase
-      .from("itens")
-      .update({
-        quantidade_estoque: Math.max(0, (Number(produto.quantidade_estoque) || 0) - item.quantidade),
-        quantidade_vendas:  (Number(produto.quantidade_vendas)  || 0) + item.quantidade
-      })
-      .eq("id", item.item_id);
-  }
+  await axios.post(BARRAMENTO, evento);
+  console.log(`[Pedidos] Evento PedidoEfetivado emitido — pedido ${pedidoId} → ${status}`);
 }
 
 async function buscarItensDoCarrinho(carrinhoId: string) {
@@ -282,12 +288,12 @@ router.post("/", requireAuth, requireRole("cliente"), async (req: Request, res: 
 
   const itensCarrinho = await buscarItensDoCarrinho(String(carrinho.id));
 
-  // Decrementa estoque se pedido já foi criado como confirmado/entregue
-  if (deveDecrementarEstoque(null, (status || "pendente") as StatusPedido)) {
+  // Emite evento se pedido já nasce como confirmado/entregue
+  if (deveEmitirEvento(null, (status || "pendente") as StatusPedido)) {
     try {
-      await decrementarEstoque(String(carrinho.id));
+      await emitirEventoPedidoEfetivado(String(venda.id), String(carrinho.id), status as StatusPedido);
     } catch (err) {
-      console.error("Aviso: erro ao decrementar estoque no POST:", err);
+      console.error("[Pedidos] Aviso: barramento indisponível no POST. Evento não emitido:", (err as Error).message);
     }
   }
 
@@ -339,18 +345,17 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
   if (error) return handleSupabaseError(res, error);
   if (!data) return res.status(404).json({ mensagem: "Pedido não encontrado." });
 
-  // Decrementa estoque se o status foi alterado para confirmado/entregue pela primeira vez
+  // Emite evento se o status foi alterado para confirmado/entregue pela primeira vez
   if (
     status !== undefined &&
     pedidoAtual &&
     pedidoAtual.carrinho_id &&
-    deveDecrementarEstoque(pedidoAtual.status as StatusPedido, status as StatusPedido)
+    deveEmitirEvento(pedidoAtual.status as StatusPedido, status as StatusPedido)
   ) {
     try {
-      await decrementarEstoque(String(pedidoAtual.carrinho_id));
-      console.log(`Estoque decrementado — pedido ${req.params.id} → ${status}`);
+      await emitirEventoPedidoEfetivado(req.params.id, String(pedidoAtual.carrinho_id), status as StatusPedido);
     } catch (err) {
-      console.error("Aviso: erro ao decrementar estoque:", err);
+      console.error("[Pedidos] Aviso: barramento indisponível no PUT. Evento não emitido:", (err as Error).message);
     }
   }
 
@@ -379,18 +384,16 @@ router.patch("/:id/status", requireAuth, requireRole("admin"), async (req: Reque
   if (error) return handleSupabaseError(res, error);
   if (!data) return res.status(404).json({ mensagem: "Pedido não encontrado." });
 
-  // Decrementa estoque na primeira transição para confirmado/entregue
+  // Emite evento na primeira transição para confirmado/entregue
   if (
     pedidoAtual &&
     pedidoAtual.carrinho_id &&
-    deveDecrementarEstoque(pedidoAtual.status as StatusPedido, status)
+    deveEmitirEvento(pedidoAtual.status as StatusPedido, status)
   ) {
     try {
-      await decrementarEstoque(String(pedidoAtual.carrinho_id));
-      console.log(`Estoque decrementado — pedido ${req.params.id} → ${status}`);
+      await emitirEventoPedidoEfetivado(req.params.id, String(pedidoAtual.carrinho_id), status);
     } catch (err) {
-      console.error("Aviso: erro ao decrementar estoque:", err);
-      // Não bloqueia a resposta; o status já foi salvo
+      console.error("[Pedidos] Aviso: barramento indisponível no PATCH. Evento não emitido:", (err as Error).message);
     }
   }
 

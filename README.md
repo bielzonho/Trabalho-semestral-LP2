@@ -272,8 +272,8 @@ No frontend, produtos com estoque 0 aparecem como **"Indisponível"** e não pod
 | Nome | RA |
 |---|---|
 | André Freire Prino | 21.00476-5 |
-| Joaquim Anderlini Alves da Cunha | 22.00536-6 |
-| Gabriel Giardino Sprotte | 23.00964-0 |
 | Gabriel Fernandes Sabino | 23.01062-2 |
+| Gabriel Giardino Sprotte | 23.00964-0 |
 | Guilherme Gonsales de Sá | 23.00882-2 |
+| Joaquim Anderlini Alves da Cunha | 22.00536-6 |
 | Thiago Espigado Miras | 22.01836-0 |
