@@ -10,7 +10,7 @@ Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de
 
 ## Arquitetura
 
-**6 microserviços independentes** (Express + TypeScript) + Frontend estático:
+**6 microserviços independentes** (Express + TypeScript) + **Frontend React** (Vite + React Router):
 
 | Serviço | Porta | Responsabilidade |
 |---|---|---|
@@ -21,16 +21,31 @@ Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de
 | Verificação de E-mail | 3014 | OTP por e-mail para confirmar acesso |
 | Barramento de Eventos | 3015 | Recebe, armazena e faz broadcast de eventos entre serviços |
 
-**Frontend** (HTML5 + CSS3 + JavaScript):
+**Frontend React (SPA — Single Page Application):**
 
-| Página | Acesso | Descrição |
+| Rota | Acesso | Descrição |
 |---|---|---|
-| `index.html` | Cliente | Catálogo de cestas, catálogo de produtos, novo pedido, meus pedidos |
-| `login.html` | Público | Login com verificação OTP, criação de conta |
-| `pedidos.html` | Admin | Gestão completa de pedidos e status |
-| `produtos.html` | Admin | CRUD de produtos e estoque |
-| `cestas.html` | Admin | CRUD de cestas |
-| `admin.html` | Admin | Painel administrativo |
+| `/` | Cliente | Catálogo de cestas, catálogo de produtos, novo pedido, meus pedidos |
+| `/login` | Público | Login com verificação OTP e criação de conta (fluxo em 3 etapas) |
+| `/admin` | Admin | Painel administrativo com abas: Produtos, Cestas e Pedidos |
+
+---
+
+## Stack Tecnológica
+
+### Backend
+- **Node.js** + **Express** + **TypeScript**
+- **Supabase** (PostgreSQL gerenciado)
+- **JWT** (`jsonwebtoken`) + **bcryptjs** para autenticação
+- **Helmet** (segurança de headers) + **CORS**
+- **Axios** para comunicação entre microsserviços
+- **concurrently** para subir todos os serviços de uma vez
+
+### Frontend
+- **React 18** (componentes funcionais + hooks)
+- **Vite** (bundler e dev server — porta 5173)
+- **React Router v6** (roteamento SPA)
+- **Fetch API** para comunicação com os microsserviços
 
 ---
 
@@ -61,43 +76,79 @@ npm install
 npm run install:services
 ```
 
-### 3. Iniciar todos os microserviços
+`install:services` instala as dependências de todos os 6 microserviços **e** do frontend React.
+
+### 3. Iniciar tudo
 
 ```bash
 npm run dev
 ```
 
-Sobe os 6 serviços simultaneamente:
-- Cestas: `http://localhost:3010`
-- Pedidos: `http://localhost:3011`
-- Produtos: `http://localhost:3012`
-- Auth: `http://localhost:3013`
-- Verificação de e-mail: `http://localhost:3014`
-- Barramento de Eventos: `http://localhost:3015`
+Sobe os 6 serviços e o servidor React simultaneamente:
 
-> **Importante:** o barramento sobe antes dos demais para garantir que os serviços consigam emitir eventos desde o início.
+| Serviço | URL |
+|---|---|
+| Frontend React | `http://localhost:5173` |
+| Cestas | `http://localhost:3010` |
+| Pedidos | `http://localhost:3011` |
+| Produtos | `http://localhost:3012` |
+| Auth | `http://localhost:3013` |
+| Verificação de E-mail | `http://localhost:3014` |
+| Barramento de Eventos | `http://localhost:3015` |
 
-### 4. Abrir o frontend
+> Para rodar separadamente: `npm run dev:back` (apenas microsserviços) ou `npm run dev:front` (apenas o React).
 
-Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equivalente.
+### 4. Acessar o sistema
+
+Abra `http://localhost:5173` no navegador.
+
+---
+
+## Estrutura do Frontend
+
+```
+front/
+├── index.html              # Entry point do Vite
+├── vite.config.js
+├── package.json
+├── public/
+│   ├── cesta.jpg
+│   └── cesta_premium.jpg
+└── src/
+    ├── main.jsx            # Monta o React no DOM
+    ├── App.jsx             # Definição das rotas (React Router)
+    ├── api/
+    │   └── api.js          # Todas as chamadas HTTP aos microsserviços
+    ├── styles/
+    │   └── global.css      # Estilos globais (paleta dourada)
+    ├── components/
+    │   ├── DecorationSVG.jsx  # Decoração de espigas de trigo do fundo
+    │   ├── Modal.jsx          # Modal reutilizável
+    │   ├── Toast.jsx          # Sistema de notificações (Context API)
+    │   └── StatusBadge.jsx    # Badge colorido por status do pedido
+    └── pages/
+        ├── LoginPage.jsx   # 3 etapas: login → OTP → cadastro
+        ├── HomePage.jsx    # Catálogo + produtos + pedido + meus pedidos
+        └── AdminPage.jsx   # Painel admin com 3 abas (Produtos, Cestas, Pedidos)
+```
 
 ---
 
 ## Fluxo de uso
 
 ### Cliente
-1. Acessa `login.html` → faz login ou cria conta
+1. Acessa `/login` → faz login ou cria conta
 2. Recebe código OTP por e-mail (ou vê no terminal em dev) → confirma
-3. Em `index.html`: vê o catálogo de cestas e produtos disponíveis
-4. Adiciona produtos extras ao pedido e envia
-5. Acompanha seus pedidos na seção "Meus pedidos"
+3. Em `/`: vê o catálogo de cestas e produtos disponíveis
+4. Clica em **+ Adicionar ao pedido** nos produtos desejados
+5. Preenche o formulário e envia o pedido
+6. Acompanha seus pedidos na seção "Meus pedidos"
 
 ### Admin
-1. Faz login → redirecionado para `admin.html`
-2. Gerencia produtos, cestas (com itens padrão) e pedidos direto no painel `admin.html`
+1. Faz login → redirecionado automaticamente para `/admin`
+2. Gerencia produtos, cestas (com itens padrão) e pedidos nas abas do painel
 3. Ao confirmar/entregar um pedido, o serviço de pedidos emite o evento `PedidoEfetivado` ao barramento
 4. O barramento faz broadcast para todos os serviços; o serviço de produtos reage decrementando estoque e incrementando vendas
-5. Páginas dedicadas: `produtos.html`, `cestas.html` e `pedidos.html`
 
 ---
 
@@ -137,12 +188,6 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 | DELETE | `/cestas/:id` | Admin | Remover cesta |
 | DELETE | `/cestas/:cestaId/itens/:itemId` | Admin | Remover item da cesta |
 
-### Barramento de Eventos — `http://localhost:3015`
-| Método | Rota | Acesso | Descrição |
-|---|---|---|---|
-| POST | `/eventos` | Interno | Recebe evento, armazena e faz broadcast para todos os serviços |
-| GET | `/eventos` | Interno | Retorna todos os eventos armazenados (recovery para serviços que reiniciaram) |
-
 ### Pedidos — `http://localhost:3011`
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
@@ -153,6 +198,12 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 | PUT | `/pedidos/:id` | Admin | Atualizar pedido |
 | PATCH | `/pedidos/:id/status` | Admin | Alterar status (decrementa estoque ao confirmar/entregar) |
 | DELETE | `/pedidos/:id` | Admin | Remover pedido |
+
+### Barramento de Eventos — `http://localhost:3015`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/eventos` | Interno | Recebe evento, armazena e faz broadcast para todos os serviços |
+| GET | `/eventos` | Interno | Retorna todos os eventos armazenados (recovery para serviços que reiniciaram) |
 
 ---
 
@@ -229,11 +280,6 @@ CREATE TABLE vendas_cestas (
     CHECK (cliente_telefone IS NULL OR cliente_telefone ~ '^[0-9]+$')
 );
 
--- Migrações necessárias se a tabela já existir:
--- ALTER TABLE vendas_cestas ADD COLUMN IF NOT EXISTS email_cliente TEXT;
--- ALTER TABLE vendas_cestas ADD CONSTRAINT check_cliente_telefone
---   CHECK (cliente_telefone IS NULL OR cliente_telefone ~ '^[0-9]+$');
-
 -- Códigos OTP para verificação de e-mail
 CREATE TABLE verificacoes_email (
   id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -252,7 +298,11 @@ CREATE INDEX idx_verificacoes_email
 
 ## Barramento de Eventos
 
-O projeto implementa um **barramento de eventos manual** seguindo o padrão de comunicação assíncrona entre microsserviços (comunicação assíncrona — seção 4.2.4 da apostila).
+O projeto implementa um **barramento de eventos HTTP-based** seguindo o padrão **Pub/Sub fanout** — cada evento publicado é entregue a todos os serviços registrados, que decidem individualmente se processam ou ignoram.
+
+### Tipo do barramento
+
+É um **Event Bus Pub/Sub com entrega por webhook HTTP** (push-based). Diferentemente de soluções industriais como RabbitMQ ou Kafka, os assinantes são registrados de forma estática no array `DESTINATARIOS` e a entrega usa `axios.post()` com **fire and forget** — falhas são logadas mas não travam o sistema.
 
 ### Fluxo do evento `PedidoEfetivado`
 
@@ -271,17 +321,18 @@ Admin confirma pedido
   ├─ Armazena evento em memória
   └─ Broadcast para 3010, 3011, 3012, 3013, 3014
         │
-        ▼
-[Produtos :3012]
-  └─ Recebe "PedidoEfetivado" → decrementa estoque e incrementa vendas
+        ├─ 3010, 3011, 3013, 3014 → 404 (não implementam /eventos — ignorado)
+        │
+        └─ [Produtos :3012]
+             └─ Recebe "PedidoEfetivado" → decrementa estoque e incrementa vendas
 ```
 
 ### Por que esse padrão?
 
-| Antes | Depois |
+| Sem barramento | Com barramento |
 |---|---|
 | Pedidos acessava diretamente a tabela `itens` (domínio de produtos) | Cada serviço acessa apenas o próprio banco |
-| Violação do princípio de microsserviços | Comunicação via eventos — sem acoplamento direto |
+| Violação do princípio de isolamento de microsserviços | Comunicação via eventos — sem acoplamento direto |
 | Se produtos cair, pedidos falha ao confirmar | Produtos pode recuperar eventos perdidos via `GET /eventos` |
 
 ### Eventos disponíveis
@@ -294,11 +345,11 @@ Admin confirma pedido
 
 ## Controle de Estoque
 
-Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de **produtos** reage ao evento `PedidoEfetivado` e atualiza automaticamente cada produto do carrinho:
+Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de produtos reage ao evento `PedidoEfetivado` e atualiza automaticamente:
 - Decrementa `quantidade_estoque` pela quantidade pedida (mínimo 0)
 - Incrementa `quantidade_vendas` pela quantidade vendida
 
-A transição `confirmado → entregue` não aplica o decremento novamente.
+A transição `confirmado → entregue` **não** aplica o decremento novamente.
 
 No frontend, produtos com estoque 0 aparecem como **"Indisponível"** e não podem ser adicionados ao pedido. Produtos com menos de 10 unidades exibem o badge **"Restam X"**.
 
@@ -309,9 +360,9 @@ No frontend, produtos com estoque 0 aparecem como **"Indisponível"** e não pod
 | Camada | Implementação |
 |---|---|
 | Headers HTTP | `helmet` em todos os microserviços |
-| CORS | Origin whitelist restrita (`localhost:5500`) |
+| CORS | Origin whitelist (`localhost:5500`, `localhost:5173`) |
 | Autenticação | JWT com expiração de 8h, verificado em cada requisição |
-| Autorização | RBAC — roles `admin` e `cliente` |
+| Autorização | RBAC — roles `admin` e `cliente` via middleware `requireRole` |
 | Senhas | `bcryptjs` com salt 10 (nunca texto puro) |
 | SQL Injection | Supabase ORM com queries parametrizadas |
 | Payload | Limite de 100kb por requisição |
