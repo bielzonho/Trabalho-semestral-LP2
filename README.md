@@ -10,15 +10,16 @@ Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de
 
 ## Arquitetura
 
-**5 microserviços independentes** (Express + TypeScript) + Frontend estático:
+**6 microserviços independentes** (Express + TypeScript) + Frontend estático:
 
 | Serviço | Porta | Responsabilidade |
 |---|---|---|
 | Catálogo de Cestas | 3010 | CRUD de cestas |
-| Pedidos | 3011 | Criação e gestão de pedidos + controle de estoque |
-| Produtos | 3012 | CRUD de produtos com quantidade em estoque |
+| Pedidos | 3011 | Criação e gestão de pedidos — emite eventos ao barramento |
+| Produtos | 3012 | CRUD de produtos com estoque — reage a eventos do barramento |
 | Autenticação | 3013 | Login, registro de usuários, tokens JWT |
 | Verificação de E-mail | 3014 | OTP por e-mail para confirmar acesso |
+| Barramento de Eventos | 3015 | Recebe, armazena e faz broadcast de eventos entre serviços |
 
 **Frontend** (HTML5 + CSS3 + JavaScript):
 
@@ -66,12 +67,15 @@ npm run install:services
 npm run dev
 ```
 
-Sobe os 5 serviços simultaneamente:
+Sobe os 6 serviços simultaneamente:
 - Cestas: `http://localhost:3010`
 - Pedidos: `http://localhost:3011`
 - Produtos: `http://localhost:3012`
 - Auth: `http://localhost:3013`
 - Verificação de e-mail: `http://localhost:3014`
+- Barramento de Eventos: `http://localhost:3015`
+
+> **Importante:** o barramento sobe antes dos demais para garantir que os serviços consigam emitir eventos desde o início.
 
 ### 4. Abrir o frontend
 
@@ -91,8 +95,9 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 ### Admin
 1. Faz login → redirecionado para `admin.html`
 2. Gerencia produtos, cestas (com itens padrão) e pedidos direto no painel `admin.html`
-3. Ao confirmar/entregar um pedido, o estoque e o contador de vendas dos produtos são atualizados automaticamente
-4. Páginas dedicadas: `produtos.html`, `cestas.html` e `pedidos.html`
+3. Ao confirmar/entregar um pedido, o serviço de pedidos emite o evento `PedidoEfetivado` ao barramento
+4. O barramento faz broadcast para todos os serviços; o serviço de produtos reage decrementando estoque e incrementando vendas
+5. Páginas dedicadas: `produtos.html`, `cestas.html` e `pedidos.html`
 
 ---
 
@@ -131,6 +136,12 @@ Abra os arquivos em `front/` com o Live Server do VS Code (porta 5500) ou equiva
 | POST | `/cestas/:id/itens` | Admin | Adicionar item à cesta |
 | DELETE | `/cestas/:id` | Admin | Remover cesta |
 | DELETE | `/cestas/:cestaId/itens/:itemId` | Admin | Remover item da cesta |
+
+### Barramento de Eventos — `http://localhost:3015`
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/eventos` | Interno | Recebe evento, armazena e faz broadcast para todos os serviços |
+| GET | `/eventos` | Interno | Retorna todos os eventos armazenados (recovery para serviços que reiniciaram) |
 
 ### Pedidos — `http://localhost:3011`
 | Método | Rota | Acesso | Descrição |
@@ -239,9 +250,51 @@ CREATE INDEX idx_verificacoes_email
 
 ---
 
+## Barramento de Eventos
+
+O projeto implementa um **barramento de eventos manual** seguindo o padrão de comunicação assíncrona entre microsserviços (comunicação assíncrona — seção 4.2.4 da apostila).
+
+### Fluxo do evento `PedidoEfetivado`
+
+```
+Admin confirma pedido
+        │
+        ▼
+[Pedidos :3011]
+  ├─ Atualiza status em vendas_cestas   (próprio banco)
+  └─ POST /eventos → Barramento :3015
+       { tipo: "PedidoEfetivado",
+         dados: { pedidoId, status, itens: [{itemId, quantidade}] } }
+        │
+        ▼
+[Barramento :3015]
+  ├─ Armazena evento em memória
+  └─ Broadcast para 3010, 3011, 3012, 3013, 3014
+        │
+        ▼
+[Produtos :3012]
+  └─ Recebe "PedidoEfetivado" → decrementa estoque e incrementa vendas
+```
+
+### Por que esse padrão?
+
+| Antes | Depois |
+|---|---|
+| Pedidos acessava diretamente a tabela `itens` (domínio de produtos) | Cada serviço acessa apenas o próprio banco |
+| Violação do princípio de microsserviços | Comunicação via eventos — sem acoplamento direto |
+| Se produtos cair, pedidos falha ao confirmar | Produtos pode recuperar eventos perdidos via `GET /eventos` |
+
+### Eventos disponíveis
+
+| Tipo | Emitido por | Consumido por | Descrição |
+|---|---|---|---|
+| `PedidoEfetivado` | Pedidos (3011) | Produtos (3012) | Disparado na primeira transição para `confirmado` ou `entregue` |
+
+---
+
 ## Controle de Estoque
 
-Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de pedidos atualiza automaticamente cada produto do carrinho:
+Ao alterar o status de um pedido para **`confirmado`** ou **`entregue`** (pela primeira vez), o serviço de **produtos** reage ao evento `PedidoEfetivado` e atualiza automaticamente cada produto do carrinho:
 - Decrementa `quantidade_estoque` pela quantidade pedida (mínimo 0)
 - Incrementa `quantidade_vendas` pela quantidade vendida
 
