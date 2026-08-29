@@ -5,7 +5,7 @@ import { Pedido, PedidoItem, StatusPedido } from "../types/pedido";
 import { requireAuth } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/roles.middleware";
 
-const BARRAMENTO = "http://localhost:3015/eventos";
+const BARRAMENTO = process.env.BARRAMENTO_URL || "http://localhost:3015/eventos";
 
 const router = Router();
 
@@ -353,7 +353,7 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
     deveEmitirEvento(pedidoAtual.status as StatusPedido, status as StatusPedido)
   ) {
     try {
-      await emitirEventoPedidoEfetivado(req.params.id, String(pedidoAtual.carrinho_id), status as StatusPedido);
+      await emitirEventoPedidoEfetivado(String(req.params.id), String(pedidoAtual.carrinho_id), status as StatusPedido);
     } catch (err) {
       console.error("[Pedidos] Aviso: barramento indisponível no PUT. Evento não emitido:", (err as Error).message);
     }
@@ -391,7 +391,7 @@ router.patch("/:id/status", requireAuth, requireRole("admin"), async (req: Reque
     deveEmitirEvento(pedidoAtual.status as StatusPedido, status)
   ) {
     try {
-      await emitirEventoPedidoEfetivado(req.params.id, String(pedidoAtual.carrinho_id), status);
+      await emitirEventoPedidoEfetivado(String(req.params.id), String(pedidoAtual.carrinho_id), status);
     } catch (err) {
       console.error("[Pedidos] Aviso: barramento indisponível no PATCH. Evento não emitido:", (err as Error).message);
     }
