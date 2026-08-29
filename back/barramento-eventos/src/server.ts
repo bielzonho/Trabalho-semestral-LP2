@@ -8,7 +8,7 @@ const PORT = 3015;
 
 app.use(helmet());
 app.use(cors({
-  origin: ["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:3000", "null"],
+  origin: ["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "null"],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
