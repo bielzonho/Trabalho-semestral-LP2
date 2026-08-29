@@ -1,0 +1,62 @@
+services:
+  barramento-eventos:
+    build: ./back/barramento-eventos
+    ports:
+      - "3015:3015"
+    env_file:
+      - .env
+    environment:
+      CATALOGO_CESTAS_URL: http://catalogo-cestas:3010/eventos
+      PEDIDOS_URL: http://pedidos:3011/eventos
+      PRODUTOS_URL: http://produtos:3012/eventos
+      AUTH_URL: http://auth:3013/eventos
+      VERIFICACAO_EMAIL_URL: http://verificacao-email:3014/eventos
+    depends_on:
+      - catalogo-cestas
+      - pedidos
+      - produtos
+      - auth
+      - verificacao-email
+    restart: unless-stopped
+
+  catalogo-cestas:
+    build: ./back/catalogo-cestas
+    ports:
+      - "3010:3010"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  pedidos:
+    build: ./back/pedidos
+    ports:
+      - "3011:3011"
+    env_file:
+      - .env
+    environment:
+      BARRAMENTO_URL: http://barramento-eventos:3015/eventos
+    restart: unless-stopped
+
+  produtos:
+    build: ./back/produtos
+    ports:
+      - "3012:3012"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  auth:
+    build: ./back/auth
+    ports:
+      - "3013:3013"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  verificacao-email:
+    build: ./back/verificacao-email
+    ports:
+      - "3014:3014"
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -22,11 +22,11 @@ const eventos: Evento[] = [];
 // ── Destinatários registrados ────────────────────────────────────
 // Cada microsserviço expõe POST /eventos para receber o broadcast
 const DESTINATARIOS = [
-  "http://localhost:3010/eventos",  // catalogo-cestas
-  "http://localhost:3011/eventos",  // pedidos
-  "http://localhost:3012/eventos",  // produtos  ← processa PedidoEfetivado
-  "http://localhost:3013/eventos",  // auth
-  "http://localhost:3014/eventos",  // verificacao-email
+  process.env.CATALOGO_CESTAS_URL || "http://localhost:3010/eventos",       // catalogo-cestas
+  process.env.PEDIDOS_URL || "http://localhost:3011/eventos",               // pedidos
+  process.env.PRODUTOS_URL || "http://localhost:3012/eventos",              // produtos  ← processa PedidoEfetivado
+  process.env.AUTH_URL || "http://localhost:3013/eventos",                  // auth
+  process.env.VERIFICACAO_EMAIL_URL || "http://localhost:3014/eventos",     // verificacao-email
 ];
 
 // ── POST /eventos ────────────────────────────────────────────────
