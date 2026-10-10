@@ -299,6 +299,10 @@ Frontend (SPA - Single Page Application)
 ├── CSS3 (Grid, Flexbox, Responsivo)
 └── JavaScript ES6+ (Fetch API, Async/Await)
 
+Cliente mobile/multiplataforma (mobile/)
+├── Flutter 3 (Dart, Material 3)
+└── 1 tela (catálogo) com dados fictícios — ainda sem integração com o Back End
+
 Backend (Microserviços)
 ├── Node.js 18+
 ├── Express.js

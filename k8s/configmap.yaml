@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lp2-config
+data:
+  BARRAMENTO_URL: http://barramento-eventos:3015/eventos
+  CATALOGO_CESTAS_URL: http://catalogo-cestas:3010/eventos
+  PEDIDOS_URL: http://pedidos:3011/eventos
+  PRODUTOS_URL: http://produtos:3012/eventos
+  AUTH_URL: http://auth:3013/eventos
+  VERIFICACAO_EMAIL_URL: http://verificacao-email:3014/eventos

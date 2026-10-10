@@ -2,3 +2,4 @@
 supabase-config.js
 node_modules/
 docs/
+k8s/secret.yaml

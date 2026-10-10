@@ -104,6 +104,135 @@ Abra `http://localhost:5173` no navegador.
 
 ---
 
+## App Flutter (`mobile/`)
+
+Aplicação Flutter com **uma tela** (catálogo de cestas e produtos), usando **dados fictícios** em `mobile/lib/data/mock_dados.dart`. Ainda **não há integração com o Back End** — os models (`Cesta`, `Produto`) já seguem o formato das APIs `:3010/cestas` e `:3012/produtos`, então a integração futura só troca a fonte dos dados.
+
+### Pré-requisitos
+- [Flutter SDK](https://docs.flutter.dev/get-started/install/windows) estável no PATH (`flutter --version`).
+- Um navegador (Chrome ou Edge) para o alvo web. Android SDK e Visual Studio são opcionais.
+
+### Executar
+
+```bash
+cd mobile
+flutter pub get
+flutter run -d chrome      # ou: -d edge
+```
+
+Outros comandos: `flutter analyze`, `flutter test` e `flutter build web`.
+
+### Estrutura
+
+```
+mobile/lib/
+├── main.dart               # MaterialApp + tema
+├── theme/app_theme.dart    # paleta dourada, Material 3
+├── models/                 # Cesta, Produto
+├── data/mock_dados.dart    # dados fictícios
+├── pages/catalogo_page.dart  # única tela
+└── widgets/                # CestaCard, ProdutoCard, SecaoTitulo
+```
+
+A tela mostra o banner, o catálogo de cestas e os produtos (estoque 0 aparece como "Esgotado"/"Indisponível"; menos de 10 unidades, "Restam N"), com contador de itens e aviso ao adicionar.
+
+---
+
+## Rodando com Docker Compose
+
+Requer Docker Desktop e o arquivo `.env` configurado na raiz (veja o passo 1 do Quick Start; use `.env.example` como modelo).
+
+```bash
+docker compose up --build
+```
+
+Sobe os 6 microsserviços em containers, expostos nas mesmas portas do modo local (3010–3015). O frontend não está containerizado: rode-o à parte com `npm run dev:front`.
+
+Para parar: `docker compose down`.
+
+---
+
+## Rodando com Kubernetes
+
+Os manifests ficam em `k8s/` (ConfigMap, Secret e, por microsserviço, um Deployment + Service NodePort).
+
+### Pré-requisitos
+
+1. Docker Desktop → Settings → Kubernetes → **Enable Kubernetes**, com o método de provisionamento **kubeadm** (no modo *kind* o cluster não enxerga as imagens locais e os pods ficam em `ErrImageNeverPull`).
+2. `kubectl config current-context` deve retornar `docker-desktop`.
+3. Projeto Supabase ativo (projetos gratuitos pausados fazem as chamadas falharem com `fetch failed`).
+
+### Passo a passo
+
+```powershell
+# 1. Build das imagens (os manifests usam imagePullPolicy: Never)
+docker compose build
+
+# 2. Criar k8s/secret.yaml (NÃO é versionado) a partir do .env — modelo abaixo
+
+# 3. Aplicar tudo
+kubectl apply -f k8s/
+
+# 4. Conferir
+kubectl get pods        # todos devem ficar Running
+kubectl get services
+```
+
+Modelo do `k8s/secret.yaml` (está no `.gitignore`; use os mesmos valores do `.env`):
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lp2-secret
+type: Opaque
+stringData:
+  DB_URL: "https://<projeto>.supabase.co"
+  SUPABASE_SERVICE_ROLE_KEY: "<chave>"
+  JWT_SECRET: "<segredo>"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  SMTP_USER: ""
+  SMTP_PASS: ""
+  EMAIL_FROM: ""
+```
+
+### Portas (NodePort)
+
+| Serviço | Interna | Externa |
+|---|---|---|
+| Catálogo de Cestas | 3010 | `localhost:30010` |
+| Pedidos | 3011 | `localhost:30011` |
+| Produtos | 3012 | `localhost:30012` |
+| Auth | 3013 | `localhost:30013` |
+| Verificação de E-mail | 3014 | `localhost:30014` |
+| Barramento de Eventos | 3015 | `localhost:30015` |
+
+Dentro do cluster os serviços se enxergam pelo nome do Service (ex.: `http://produtos:3012`), configurado no `k8s/configmap.yaml`.
+
+> **Frontend:** o React continua apontando para as portas 3010–3014 (`front/src/api/api.js`), então não conversa com os NodePorts do cluster. Teste o cluster com `curl`/Postman.
+
+### Testes rápidos
+
+```bash
+curl http://localhost:30012/produtos
+curl http://localhost:30010/cestas
+curl -X POST http://localhost:30015/eventos -H "Content-Type: application/json" \
+  -d '{"tipo":"PedidoEfetivado","dados":{"pedidoId":"teste","status":"confirmado","itens":[{"itemId":"999999","quantidade":1}]}}'
+kubectl logs deploy/produtos      # deve mostrar o evento recebido
+kubectl logs deploy/barramento-eventos
+```
+
+Os `404` do barramento para catálogo, pedidos, auth e verificação são esperados: esses serviços não consomem o evento.
+
+### Limpeza
+
+```powershell
+kubectl delete -f k8s/
+```
+
+---
+
 ## Estrutura do Frontend
 
 ```
