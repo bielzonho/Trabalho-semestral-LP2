@@ -1,17 +1,22 @@
 :root {
-  --bg: #e6bb84;
+  --bg: #f3e2c7;
   --card: #ffffff;
   --card-warm: #fff8f0;
-  --text: #222;
+  --text: #2b2118;
   --text-warm: #3a2a1a;
-  --muted: #666;
+  --muted: #6b5f53;
   --muted-warm: #7a6a5a;
   --gold: #c59d5f;
   --gold-dark: #a07840;
-  --border: #e7e1d8;
-  --border-warm: #d4b896;
-  --shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --border: #eadfce;
+  --border-warm: #d9c3a3;
+  --shadow: 0 1px 2px rgba(80, 50, 15, 0.06), 0 6px 18px rgba(80, 50, 15, 0.08);
+  --shadow-hover: 0 2px 4px rgba(80, 50, 15, 0.08), 0 14px 30px rgba(80, 50, 15, 0.16);
   --shadow-warm: rgba(100, 60, 20, 0.12);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font-title: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', 'Segoe UI', Arial, sans-serif;
   --danger: #c0392b;
   --danger-light: #f9e8e8;
   --success: #2e7d32;
@@ -26,7 +31,7 @@
 
 html,
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -938,4 +943,260 @@ tr:hover { background: #fdf5e6; }
   .section-title { font-size: 24px; }
   .admin-conteudo { padding: 20px 16px; }
   .admin-tabs { padding: 16px 16px 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Tema refinado — camada de apresentação (sem mudar estrutura)
+   ══════════════════════════════════════════════════════════════ */
+
+body {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(255, 255, 255, 0.55), transparent 60%),
+    linear-gradient(180deg, #f6e8d0 0%, #efd9b6 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3,
+.brand strong,
+.section-title,
+.cesta-nome {
+  font-family: var(--font-title);
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(197, 157, 95, 0.55);
+  outline-offset: 2px;
+}
+
+/* Header */
+.site-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 20px rgba(80, 50, 15, 0.06);
+}
+
+.brand strong { color: var(--text-warm); font-size: 24px; }
+.brand span { letter-spacing: 0.04em; }
+
+.site-nav a {
+  color: var(--text-warm);
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s;
+}
+.site-nav a:hover { background: rgba(197, 157, 95, 0.16); color: var(--gold-dark); }
+
+/* Banner */
+.banner {
+  min-height: 300px;
+  background:
+    radial-gradient(600px 260px at 20% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
+    linear-gradient(135deg, #d4ab6a 0%, #b88a4a 55%, #9a7038 100%);
+  border-radius: 0 0 36px 36px;
+  box-shadow: 0 18px 40px rgba(100, 60, 20, 0.22);
+}
+.banner h1 {
+  color: #fff;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800;
+  text-shadow: 0 2px 14px rgba(60, 30, 0, 0.35);
+}
+.banner p {
+  color: var(--text-warm);
+  background: rgba(255, 248, 240, 0.9);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(60, 30, 0, 0.18);
+}
+
+/* Títulos de seção */
+.section-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-warm);
+  position: relative;
+  padding-bottom: 12px;
+}
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 52px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--gold);
+}
+.section-divider {
+  background: linear-gradient(90deg, transparent, var(--border-warm), transparent);
+}
+
+/* Cards */
+.cesta-card,
+.produto-card,
+.card {
+  background: var(--card-warm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.cesta-card:hover,
+.produto-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+.cesta-imagem img { transition: transform 0.5s ease; }
+.cesta-card:hover .cesta-imagem img { transform: scale(1.05); }
+.cesta-nome { color: var(--text-warm); }
+.cesta-preco,
+.p-preco { color: var(--gold-dark); }
+.cesta-preco { font-size: 20px; }
+.p-nome { color: var(--text-warm); }
+
+/* Botões */
+.btn-primary,
+.btn-add-produto,
+.btn-novo,
+.btn-salvar,
+.btn-login-primary {
+  background: linear-gradient(180deg, #cfa869 0%, var(--gold) 100%);
+  box-shadow: 0 2px 6px rgba(160, 120, 64, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s;
+}
+.btn-primary:hover,
+.btn-add-produto:not(:disabled):hover,
+.btn-novo:hover,
+.btn-salvar:hover,
+.btn-login-primary:not(:disabled):hover {
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+  box-shadow: 0 6px 16px rgba(160, 120, 64, 0.4);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled,
+.btn-add-produto:disabled,
+.btn-login-primary:disabled {
+  background: #d8d0c4;
+  box-shadow: none;
+  color: #fff;
+}
+
+/* Badges */
+.badge-estoque { border-radius: 999px; padding: 3px 10px; }
+.badge-admin { box-shadow: 0 2px 6px rgba(160, 120, 64, 0.35); }
+
+/* Formulários */
+.form-group input,
+.form-group select,
+.form-group textarea,
+.campo input,
+.campo select,
+.campo textarea,
+.login-form-group input {
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus,
+.login-form-group input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(197, 157, 95, 0.22);
+}
+
+/* Meus pedidos */
+.meu-pedido {
+  background: #fff;
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+}
+.meu-pedido:hover { box-shadow: var(--shadow); }
+.meu-pedido-valor { color: var(--gold-dark); }
+
+/* Login */
+.login-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(100, 60, 20, 0.2);
+  animation: subir 0.45s ease both;
+}
+.login-card h2 { font-family: var(--font-title); font-size: 28px; }
+.btn-login-primary { border-radius: var(--radius-sm); }
+
+/* Admin */
+.admin-bg { background: linear-gradient(180deg, #f8f0e3 0%, #f1e4cf 100%); }
+.admin-header {
+  background: rgba(255, 248, 240, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.admin-header h1 { font-family: var(--font-title); }
+.admin-tabs { gap: 4px; }
+.admin-tab { border-radius: 10px 10px 0 0; }
+.admin-tab:hover { background: rgba(197, 157, 95, 0.1); }
+.admin-tab.ativa { background: rgba(197, 157, 95, 0.12); }
+
+.tabela-container {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+thead { background: linear-gradient(180deg, #f3e8d6, #ecdcc2); }
+tbody tr:nth-child(even) { background: rgba(240, 230, 216, 0.28); }
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: #fbeed4; }
+.btn-acao:hover { transform: translateY(-1px); }
+
+/* Modal e toast */
+.modal-overlay {
+  background: rgba(40, 24, 8, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: aparecer 0.2s ease both;
+  padding: 16px;
+}
+.modal-box {
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(40, 24, 8, 0.35);
+  animation: subir 0.28s ease both;
+}
+.modal-box h3 { font-family: var(--font-title); font-size: 22px; }
+
+.toast {
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: subir 0.3s ease both;
+}
+
+/* Decoração mais discreta */
+.decoration-svg { opacity: 0.14; }
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .banner { min-height: 220px; border-radius: 0 0 24px 24px; }
+  .section-title { font-size: 25px; }
+  .login-card { padding: 32px 22px; }
+  .toast { left: 16px; right: 16px; bottom: 16px; }
+  .modal-box { padding: 24px 20px; }
 }
