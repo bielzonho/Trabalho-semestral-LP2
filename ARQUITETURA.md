@@ -304,6 +304,7 @@ Cliente mobile/multiplataforma (mobile/)
 └── 1 tela (catálogo) com dados fictícios — ainda sem integração com o Back End
 
 Backend (Microserviços)
+├── Dart 3 + shelf (verificacao-email-dart, porta 3016, em paralelo ao serviço Node)
 ├── Node.js 18+
 ├── Express.js
 ├── TypeScript
