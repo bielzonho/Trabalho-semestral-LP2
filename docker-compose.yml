@@ -11,12 +11,14 @@ services:
       PRODUTOS_URL: http://produtos:3012/eventos
       AUTH_URL: http://auth:3013/eventos
       VERIFICACAO_EMAIL_URL: http://verificacao-email:3014/eventos
+      VERIFICACAO_EMAIL_DART_URL: http://verificacao-email-dart:3016/eventos
     depends_on:
       - catalogo-cestas
       - pedidos
       - produtos
       - auth
       - verificacao-email
+      - verificacao-email-dart
     restart: unless-stopped
 
   catalogo-cestas:
@@ -57,6 +59,14 @@ services:
     build: ./back/verificacao-email
     ports:
       - "3014:3014"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  verificacao-email-dart:
+    build: ./back/verificacao-email-dart
+    ports:
+      - "3016:3016"
     env_file:
       - .env
     restart: unless-stopped

@@ -20,6 +20,7 @@ Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de
 | Autenticação | 3013 | Login, registro de usuários, tokens JWT |
 | Verificação de E-mail | 3014 | OTP por e-mail para confirmar acesso |
 | Barramento de Eventos | 3015 | Recebe, armazena e faz broadcast de eventos entre serviços |
+| Verificação de E-mail (Dart) | 3016 | Reimplementação em **Dart** do serviço de OTP, roda em paralelo ao 3014 |
 
 **Frontend React (SPA — Single Page Application):**
 
@@ -138,6 +139,38 @@ A tela mostra o banner, o catálogo de cestas e os produtos (estoque 0 aparece c
 
 ---
 
+## Serviço em Dart (`back/verificacao-email-dart/`)
+
+Reimplementação em **Dart** (shelf) do microsserviço de verificação de e-mail (OTP). Tem o **mesmo contrato HTTP** do serviço Node em `back/verificacao-email` (`GET /`, `POST /verificacao/enviar`, `POST /verificacao/confirmar`) e usa a mesma tabela `verificacoes_email` do Supabase, acessada pela API REST (sem SDK). Roda em paralelo, na porta **3016** (o Node continua na 3014).
+
+### Executar
+
+```bash
+# precisa do Dart SDK (vem junto com o Flutter) e do .env na raiz
+npm run dev:verificacao-dart
+# ou
+cd back/verificacao-email-dart && dart pub get && dart run bin/server.dart
+```
+
+Usa as mesmas variáveis do `.env` (`DB_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SMTP_*`, `EMAIL_FROM`). Sem `SMTP_USER`/`SMTP_PASS`, o código OTP aparece no terminal do serviço.
+
+### Testes
+
+```bash
+cd back/verificacao-email-dart
+dart analyze
+dart test      # 22 testes, com repositório e e-mail falsos (não usam Supabase)
+```
+
+### Usar no lugar do serviço Node
+O front continua apontando para `:3014`. Para testar com o serviço Dart, troque `API_VERIFICACAO_URL` em `front/src/api/api.js` para `http://localhost:3016/verificacao`.
+
+O serviço também expõe `POST /eventos` (responde `200 {"msg":"ok"}`), então recebe o broadcast do barramento sem gerar `404`.
+
+Com Docker/Kubernetes ele aparece como `verificacao-email-dart` (compose: `3016:3016`; k8s: NodePort `30016`).
+
+---
+
 ## Rodando com Docker Compose
 
 Requer Docker Desktop e o arquivo `.env` configurado na raiz (veja o passo 1 do Quick Start; use `.env.example` como modelo).
@@ -207,6 +240,7 @@ stringData:
 | Auth | 3013 | `localhost:30013` |
 | Verificação de E-mail | 3014 | `localhost:30014` |
 | Barramento de Eventos | 3015 | `localhost:30015` |
+| Verificação de E-mail (Dart) | 3016 | `localhost:30016` |
 
 Dentro do cluster os serviços se enxergam pelo nome do Service (ex.: `http://produtos:3012`), configurado no `k8s/configmap.yaml`.
 
@@ -332,7 +366,8 @@ front/
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | POST | `/eventos` | Interno | Recebe evento, armazena e faz broadcast para todos os serviços |
-| GET | `/eventos` | Interno | Retorna todos os eventos armazenados (recovery para serviços que reiniciaram) |
+| GET | `/eventos` | Interno | Retorna os eventos armazenados (recovery para serviços que reiniciaram) |
+| GET | `/eventos?desde=<id>` | Interno | Retorna só os eventos com `id` maior que o informado (recovery incremental) |
 
 ---
 
@@ -447,14 +482,22 @@ Admin confirma pedido
         │
         ▼
 [Barramento :3015]
-  ├─ Armazena evento em memória
-  └─ Broadcast para 3010, 3011, 3012, 3013, 3014
+  ├─ Armazena evento em memória (com `id` e `emitidoEm`)
+  └─ Broadcast para 3010, 3011, 3012, 3013, 3014, 3016
         │
-        ├─ 3010, 3011, 3013, 3014 → 404 (não implementam /eventos — ignorado)
+        ├─ 3010, 3011, 3013, 3014 → 404 (não implementam /eventos — não repetido)
+        ├─ 3016 (Dart) → 200 (aceita e ignora)
         │
         └─ [Produtos :3012]
              └─ Recebe "PedidoEfetivado" → decrementa estoque e incrementa vendas
 ```
+
+### Entrega e recuperação
+
+- **Retry:** a entrega a cada destinatário tem timeout de 5s e até 3 tentativas com backoff (0,5s, 1s) em falha de rede ou resposta 5xx. Respostas 4xx (ex.: `404` de serviços que não consomem o evento) **não** são repetidas.
+- **Recovery:** cada evento ganha um `id` sequencial. `GET /eventos?desde=<id>` devolve só os eventos mais novos que o `id` informado; sem o parâmetro devolve todos.
+- **Memória:** o log guarda os 1000 eventos mais recentes.
+- **Destinatário Dart:** configurado por `VERIFICACAO_EMAIL_DART_URL` (padrão `http://localhost:3016/eventos`).
 
 ### Por que esse padrão?
 
