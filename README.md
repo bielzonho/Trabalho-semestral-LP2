@@ -107,35 +107,63 @@ Abra `http://localhost:5173` no navegador.
 
 ## App Flutter (`mobile/`)
 
-Aplicação Flutter com **uma tela** (catálogo de cestas e produtos), usando **dados fictícios** em `mobile/lib/data/mock_dados.dart`. Ainda **não há integração com o Back End** — os models (`Cesta`, `Produto`) já seguem o formato das APIs `:3010/cestas` e `:3012/produtos`, então a integração futura só troca a fonte dos dados.
+Aplicação Flutter (web) **integrada ao Back End**, com duas telas e duas funcionalidades reais:
+
+| Funcionalidade | Tela | Serviço usado |
+|---|---|---|
+| **Catálogo real** de cestas e produtos (loading, erro com "Tentar de novo", pull-to-refresh) | Catálogo | `GET :3010/cestas` e `GET :3012/produtos` |
+| **Login** com e-mail e senha (token JWT guardado; sessão restaurada ao recarregar a página; botão Sair) | Login | `POST :3013/auth/login` e `GET :3013/auth/me` |
+
+Fora do escopo desta entrega: criar pedido, cadastro, verificação OTP e área admin (o botão "Pedir"/"Adicionar" só atualiza o contador local).
 
 ### Pré-requisitos
 - [Flutter SDK](https://docs.flutter.dev/get-started/install/windows) estável no PATH (`flutter --version`).
-- Um navegador (Chrome ou Edge) para o alvo web. Android SDK e Visual Studio são opcionais.
+- Chrome ou Edge para o alvo web. Android SDK e Visual Studio são opcionais.
+- **Back end no ar** (`npm run dev:back`, ou Docker/Kubernetes). Para entrar, use um usuário de desenvolvimento (e-mails e senhas de seed em `back/auth/src/users.ts`) ou uma conta criada pelo React.
 
 ### Executar
 
 ```bash
 cd mobile
 flutter pub get
-flutter run -d chrome      # ou: -d edge
+flutter run -d edge --web-port=5500      # ou: -d chrome
 ```
 
-Outros comandos: `flutter analyze`, `flutter test` e `flutter build web`.
+> **Use sempre `--web-port=5500`.** O Flutter web sobe numa porta aleatória e o back end só libera por CORS as origens `localhost:5500`, `5173` e `3000`; em outra porta o navegador bloqueia as chamadas e o catálogo mostra "Não foi possível conectar ao servidor".
+
+O host do back end pode ser trocado com `--dart-define=API_HOST=<ip>` (padrão `localhost`).
+
+### Testes
+
+```bash
+cd mobile
+flutter analyze
+flutter test                  # widgets: catálogo, erro de rede, login (usa repositório/auth falsos)
+flutter build web
+
+# integração com o back end REAL (precisa dele no ar):
+dart run tool/smoke.dart cliente@email.com <senha-de-dev>
+```
+
+`tool/smoke.dart` usa as mesmas classes de serviço do app e verifica: listagem de cestas e produtos, login inválido (401), login sem campos (400), login válido, `/auth/me` e token inválido (401).
+
+> Em algumas máquinas Windows com Smart App Control/WDAC o `flutter test` é bloqueado (`flutter_tester.exe`); nesse caso use `flutter analyze` + `tool/smoke.dart`.
 
 ### Estrutura
 
 ```
 mobile/lib/
-├── main.dart               # MaterialApp + tema
-├── theme/app_theme.dart    # paleta dourada, Material 3
-├── models/                 # Cesta, Produto
-├── data/mock_dados.dart    # dados fictícios
-├── pages/catalogo_page.dart  # única tela
-└── widgets/                # CestaCard, ProdutoCard, SecaoTitulo
+├── main.dart                   # MaterialApp, injeta repositório e sessão
+├── config/api_config.dart      # URLs dos serviços (API_HOST)
+├── services/                   # ApiClient (http), catálogo, auth, token_storage (localStorage no web)
+├── state/sessao_controller.dart  # login/logout/restaurar sessão (ChangeNotifier)
+├── models/                     # Cesta, Produto, Usuario (fromJson)
+├── pages/                      # catalogo_page, login_page
+├── theme/app_theme.dart        # paleta dourada, Material 3
+├── widgets/                    # CestaCard, ProdutoCard, SecaoTitulo
+└── data/mock_dados.dart        # dados de exemplo usados só nos testes
+mobile/tool/smoke.dart          # teste de integração com o back end
 ```
-
-A tela mostra o banner, o catálogo de cestas e os produtos (estoque 0 aparece como "Esgotado"/"Indisponível"; menos de 10 unidades, "Restam N"), com contador de itens e aviso ao adicionar.
 
 ---
 
