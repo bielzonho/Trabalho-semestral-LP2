@@ -301,7 +301,7 @@ Frontend (SPA - Single Page Application)
 
 Cliente mobile/multiplataforma (mobile/)
 ├── Flutter 3 (Dart, Material 3)
-└── 1 tela (catálogo) com dados fictícios — ainda sem integração com o Back End
+└── 2 telas (catálogo e login) integradas ao Back End: cestas (:3010), produtos (:3012) e auth (:3013)
 
 Backend (Microserviços)
 ├── Dart 3 + shelf (verificacao-email-dart, porta 3016, em paralelo ao serviço Node)
