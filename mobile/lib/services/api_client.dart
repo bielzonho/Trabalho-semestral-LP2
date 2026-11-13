@@ -32,6 +32,23 @@ class ApiClient {
             body: jsonEncode(corpo),
           ));
 
+  Future<dynamic> put(String url, Map<String, dynamic> corpo, {String? token}) =>
+      _enviar(() => _client.put(
+            Uri.parse(url),
+            headers: _headers(token),
+            body: jsonEncode(corpo),
+          ));
+
+  Future<dynamic> patch(String url, Map<String, dynamic> corpo, {String? token}) =>
+      _enviar(() => _client.patch(
+            Uri.parse(url),
+            headers: _headers(token),
+            body: jsonEncode(corpo),
+          ));
+
+  Future<dynamic> delete(String url, {String? token}) =>
+      _enviar(() => _client.delete(Uri.parse(url), headers: _headers(token)));
+
   Map<String, String> _headers(String? token) => {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',

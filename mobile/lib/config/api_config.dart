@@ -6,6 +6,10 @@ class ApiConfig {
   static const cestas = 'http://$host:3010';
   static const produtos = 'http://$host:3012';
   static const auth = 'http://$host:3013';
+  static const pedidos = 'http://$host:3011';
+
+  /// Verificação de e-mail (OTP) usa a versão em Dart do microsserviço.
+  static const verificacao = 'http://$host:3016';
 
   static const timeout = Duration(seconds: 10);
 }

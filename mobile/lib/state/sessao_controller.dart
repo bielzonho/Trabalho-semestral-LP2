@@ -19,6 +19,9 @@ class SessaoController extends ChangeNotifier {
   bool get logado => _usuario != null;
   bool get carregando => _carregando;
 
+  /// Token JWT da sessão atual (para as rotas protegidas).
+  String? get token => logado ? _storage.ler() : null;
+
   /// Ao abrir o app: se há token salvo, valida no servidor (/auth/me).
   Future<void> restaurar() async {
     final token = _storage.ler();
@@ -32,19 +35,29 @@ class SessaoController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Valida e-mail/senha sem ainda abrir a sessão (etapa 1 do login com OTP).
   /// Lança [ApiException] com a mensagem da API em caso de erro.
-  Future<void> entrar(String email, String senha) async {
+  Future<Sessao> autenticar(String email, String senha) async {
     _carregando = true;
     notifyListeners();
     try {
-      final sessao = await _auth.login(email, senha);
-      _storage.salvar(sessao.token);
-      _usuario = sessao.usuario;
+      return await _auth.login(email, senha);
     } finally {
       _carregando = false;
       notifyListeners();
     }
   }
+
+  /// Abre a sessão depois que todas as etapas do login foram concluídas.
+  void concluir(Sessao sessao) {
+    _storage.salvar(sessao.token);
+    _usuario = sessao.usuario;
+    notifyListeners();
+  }
+
+  /// Login direto (sem OTP). Lança [ApiException] em caso de erro.
+  Future<void> entrar(String email, String senha) async =>
+      concluir(await autenticar(email, senha));
 
   void sair() {
     _storage.limpar();
