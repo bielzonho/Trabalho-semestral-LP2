@@ -2,23 +2,39 @@ import 'package:flutter/material.dart';
 
 import '../models/cesta.dart';
 import '../models/produto.dart';
+import '../services/admin_catalogo_service.dart';
 import '../services/api_client.dart';
+import '../services/cadastro_service.dart';
 import '../services/catalogo_service.dart';
+import '../services/pedidos_service.dart';
+import '../services/verificacao_service.dart';
+import '../state/carrinho_controller.dart';
 import '../state/sessao_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cesta_card.dart';
 import '../widgets/produto_card.dart';
 import '../widgets/secao_titulo.dart';
+import 'admin_page.dart';
+import 'carrinho_page.dart';
 import 'login_page.dart';
+import 'meus_pedidos_page.dart';
 
 class CatalogoPage extends StatefulWidget {
   final CatalogoRepository repositorio;
   final SessaoController sessao;
+  final VerificacaoService? verificacao;
+  final CadastroService cadastro;
+  final PedidosService pedidos;
+  final AdminCatalogoService admin;
 
   const CatalogoPage({
     super.key,
     required this.repositorio,
     required this.sessao,
+    required this.cadastro,
+    required this.pedidos,
+    required this.admin,
+    this.verificacao,
   });
 
   @override
@@ -26,7 +42,7 @@ class CatalogoPage extends StatefulWidget {
 }
 
 class _CatalogoPageState extends State<CatalogoPage> {
-  int _itensNoPedido = 0;
+  final _carrinho = CarrinhoController();
 
   bool _carregando = true;
   String? _erro;
@@ -70,23 +86,80 @@ class _CatalogoPageState extends State<CatalogoPage> {
     }
   }
 
-  void _adicionar(String nome) {
-    setState(() => _itensNoPedido++);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$nome adicionado ao pedido')));
+  @override
+  void dispose() {
+    _carrinho.dispose();
+    super.dispose();
   }
 
-  Future<void> _abrirLogin() async {
+  void _avisar(String texto) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  void _adicionarCesta(Cesta cesta) {
+    _carrinho.escolherCesta(cesta);
+    _avisar('${cesta.nome} adicionado ao pedido');
+  }
+
+  void _adicionarProduto(Produto produto) {
+    if (_carrinho.quantidade(produto) >= produto.quantidadeEstoque) {
+      _avisar('Estoque insuficiente de ${produto.nome}');
+      return;
+    }
+    _carrinho.adicionar(produto);
+    _avisar('${produto.nome} adicionado ao pedido');
+  }
+
+  Future<bool> _abrirLogin() async {
     final entrou = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => LoginPage(sessao: widget.sessao)),
+      MaterialPageRoute(
+        builder: (_) => LoginPage(
+          sessao: widget.sessao,
+          verificacao: widget.verificacao,
+          cadastro: widget.cadastro,
+        ),
+      ),
     );
     if (entrou == true && mounted) {
       final nome = widget.sessao.usuario?.nome ?? '';
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Bem-vindo, $nome!')));
+      _avisar('Bem-vindo, $nome!');
     }
+    return entrou == true;
+  }
+
+  Future<void> _abrirCarrinho() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => CarrinhoPage(
+        carrinho: _carrinho,
+        sessao: widget.sessao,
+        pedidos: widget.pedidos,
+        cestas: _cestas,
+        pedirLogin: _abrirLogin,
+      ),
+    ));
+    _carregar(); // estoque pode ter mudado
+  }
+
+  void _abrirMeusPedidos() => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => MeusPedidosPage(
+          sessao: widget.sessao,
+          pedidos: widget.pedidos,
+          cestas: _cestas,
+        ),
+      ));
+
+  Future<void> _abrirAdmin() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AdminPage(
+        sessao: widget.sessao,
+        pedidos: widget.pedidos,
+        catalogo: widget.repositorio,
+        admin: widget.admin,
+      ),
+    ));
+    _carregar();
   }
 
   /// Número de colunas conforme a largura disponível.
@@ -121,6 +194,31 @@ class _CatalogoPageState extends State<CatalogoPage> {
                     'Olá, ${usuario.nome.split(' ').first}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
+                  PopupMenuButton<String>(
+                    tooltip: 'Menu',
+                    icon: const Icon(Icons.menu),
+                    onSelected: (op) {
+                      if (op == 'pedidos') _abrirMeusPedidos();
+                      if (op == 'admin') _abrirAdmin();
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'pedidos',
+                        child: ListTile(
+                          leading: Icon(Icons.receipt_long_outlined),
+                          title: Text('Meus pedidos'),
+                        ),
+                      ),
+                      if (usuario.ehAdmin)
+                        const PopupMenuItem(
+                          value: 'admin',
+                          child: ListTile(
+                            leading: Icon(Icons.admin_panel_settings_outlined),
+                            title: Text('Painel administrativo'),
+                          ),
+                        ),
+                    ],
+                  ),
                   TextButton(
                     onPressed: widget.sessao.sair,
                     child: const Text('Sair'),
@@ -130,11 +228,18 @@ class _CatalogoPageState extends State<CatalogoPage> {
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 4, right: 16),
-            child: Badge(
-              isLabelVisible: _itensNoPedido > 0,
-              label: Text('$_itensNoPedido'),
-              child: const Icon(Icons.shopping_basket_outlined),
+            padding: const EdgeInsets.only(right: 8),
+            child: ListenableBuilder(
+              listenable: _carrinho,
+              builder: (context, _) => IconButton(
+                tooltip: 'Meu pedido',
+                onPressed: _abrirCarrinho,
+                icon: Badge(
+                  isLabelVisible: _carrinho.totalItens > 0,
+                  label: Text('${_carrinho.totalItens}'),
+                  child: const Icon(Icons.shopping_basket_outlined),
+                ),
+              ),
             ),
           ),
         ],
@@ -188,7 +293,7 @@ class _CatalogoPageState extends State<CatalogoPage> {
                 for (final cesta in _cestas)
                   CestaCard(
                     cesta: cesta,
-                    onAdicionar: () => _adicionar(cesta.nome),
+                    onAdicionar: () => _adicionarCesta(cesta),
                   ),
               ],
             ),
@@ -212,7 +317,7 @@ class _CatalogoPageState extends State<CatalogoPage> {
                 for (final p in _produtos)
                   ProdutoCard(
                     produto: p,
-                    onAdicionar: () => _adicionar(p.nome),
+                    onAdicionar: () => _adicionarProduto(p),
                   ),
               ],
             ),

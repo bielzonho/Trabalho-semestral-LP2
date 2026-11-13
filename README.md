@@ -1,6 +1,6 @@
 # Trabalho-semestral-LP2
 
-Trabalho semestral de Linguagens de Programação 2 e Arquitetura de Sistemas Computacionais, com desenvolvimento backend e frontend em JavaScript e TypeScript.
+Trabalho semestral de Linguagens de Programação 2 e Arquitetura de Sistemas Computacionais: back end em microsserviços Node.js/TypeScript e **Dart**, front end web em **React** e app mobile em **Flutter**, com implantação via **Docker** e **Kubernetes**.
 
 ## Sistema de Cestas e Pedidos — Grão & Cesta
 
@@ -107,14 +107,20 @@ Abra `http://localhost:5173` no navegador.
 
 ## App Flutter (`mobile/`)
 
-Aplicação Flutter (web) **integrada ao Back End**, com duas telas e duas funcionalidades reais:
+Aplicação Flutter **integrada ao Back End**, com acesso gráfico a **todas** as funcionalidades dos microsserviços:
 
 | Funcionalidade | Tela | Serviço usado |
 |---|---|---|
-| **Catálogo real** de cestas e produtos (loading, erro com "Tentar de novo", pull-to-refresh) | Catálogo | `GET :3010/cestas` e `GET :3012/produtos` |
-| **Login** com e-mail e senha (token JWT guardado; sessão restaurada ao recarregar a página; botão Sair) | Login | `POST :3013/auth/login` e `GET :3013/auth/me` |
+| Catálogo de cestas e produtos (loading, erro, pull-to-refresh) | Catálogo | `GET :3010/cestas`, `GET :3012/produtos` |
+| Criar conta | Cadastro | `POST :3013/auth/registrar` |
+| Login em 2 etapas: e-mail/senha + código OTP por e-mail | Login | `POST :3013/auth/login`, `GET :3013/auth/me`, `POST :3016/verificacao/enviar` e `/confirmar` (**serviço Dart**) |
+| Montar pedido (cesta + itens avulsos, controle de estoque) e finalizar com dados de entrega | Meu pedido | `POST :3011/pedidos` |
+| Histórico de pedidos com status | Meus pedidos | `GET :3011/pedidos/meus` |
+| **Admin — pedidos:** listar, filtrar por status, ver detalhes, mudar status, editar, excluir | Painel › Pedidos | `GET /pedidos`, `GET /pedidos/status/:s`, `GET /pedidos/:id`, `PATCH /pedidos/:id/status`, `PUT /pedidos/:id`, `DELETE /pedidos/:id` |
+| **Admin — produtos:** criar, editar, excluir | Painel › Produtos | `POST/PUT/DELETE :3012/produtos` |
+| **Admin — cestas:** criar (com produtos), editar, excluir, adicionar/remover itens | Painel › Cestas | `GET/POST/PUT/DELETE :3010/cestas`, `POST/DELETE :3010/cestas/:id/itens` |
 
-Fora do escopo desta entrega: criar pedido, cadastro, verificação OTP e área admin (o botão "Pedir"/"Adicionar" só atualiza o contador local).
+O painel administrativo aparece no menu (☰) quando o usuário logado tem perfil `admin`. Mudar um pedido para *confirmado*/*entregue* dispara o evento `PedidoEfetivado` no barramento, que baixa o estoque no serviço de produtos.
 
 ### Pré-requisitos
 - [Flutter SDK](https://docs.flutter.dev/get-started/install/windows) estável no PATH (`flutter --version`).
@@ -155,12 +161,13 @@ dart run tool/smoke.dart cliente@email.com <senha-de-dev>
 mobile/lib/
 ├── main.dart                   # MaterialApp, injeta repositório e sessão
 ├── config/api_config.dart      # URLs dos serviços (API_HOST)
-├── services/                   # ApiClient (http), catálogo, auth, token_storage (localStorage no web)
-├── state/sessao_controller.dart  # login/logout/restaurar sessão (ChangeNotifier)
-├── models/                     # Cesta, Produto, Usuario (fromJson)
-├── pages/                      # catalogo_page, login_page
+├── services/                   # ApiClient (GET/POST/PUT/PATCH/DELETE), catálogo, auth, cadastro,
+│                               # verificação OTP (Dart), pedidos, admin do catálogo, token_storage
+├── state/                      # sessao_controller (login/OTP/logout), carrinho_controller (pedido em montagem)
+├── models/                     # Cesta, CestaItem, Produto, Pedido, Usuario (fromJson)
+├── pages/                      # catalogo, login (+OTP), cadastro, carrinho, meus_pedidos, admin (3 abas)
 ├── theme/app_theme.dart        # paleta dourada, Material 3
-├── widgets/                    # CestaCard, ProdutoCard, SecaoTitulo
+├── widgets/                    # CestaCard, ProdutoCard, PedidoTile/StatusChip, estado_tela, SecaoTitulo
 └── data/mock_dados.dart        # dados de exemplo usados só nos testes
 mobile/tool/smoke.dart          # teste de integração com o back end
 ```
