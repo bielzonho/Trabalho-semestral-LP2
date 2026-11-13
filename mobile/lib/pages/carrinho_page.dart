@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/cesta.dart';
 import '../services/pedidos_service.dart';
@@ -188,8 +189,11 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                       children: [
                         _campo(_nome, 'Nome de quem recebe', Icons.person_outline,
                             obrigatorio: true),
-                        _campo(_telefone, 'Telefone', Icons.phone_outlined,
-                            obrigatorio: true, teclado: TextInputType.phone),
+                        _campo(_telefone, 'Telefone (somente números, com DDD)',
+                            Icons.phone_outlined,
+                            obrigatorio: true,
+                            apenasDigitos: true,
+                            teclado: TextInputType.phone),
                         _campo(_endereco, 'Endereço de entrega', Icons.home_outlined,
                             obrigatorio: true),
                         _campo(_observacoes, 'Observações (opcional)', Icons.notes,
@@ -257,6 +261,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     String rotulo,
     IconData icone, {
     bool obrigatorio = false,
+    bool apenasDigitos = false,
     TextInputType? teclado,
     int linhas = 1,
   }) =>
@@ -267,6 +272,8 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           enabled: !_enviando,
           keyboardType: teclado,
           maxLines: linhas,
+          // O banco só aceita dígitos no telefone (constraint check_cliente_telefone).
+          inputFormatters: apenasDigitos ? [FilteringTextInputFormatter.digitsOnly] : null,
           decoration: InputDecoration(
             labelText: rotulo,
             prefixIcon: Icon(icone),
@@ -274,9 +281,14 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
             filled: true,
             fillColor: Colors.white,
           ),
-          validator: obrigatorio
-              ? (v) => (v == null || v.trim().isEmpty) ? 'Campo obrigatório.' : null
-              : null,
+          validator: (v) {
+            final valor = v?.trim() ?? '';
+            if (obrigatorio && valor.isEmpty) return 'Campo obrigatório.';
+            if (apenasDigitos && valor.isNotEmpty && !RegExp(r'^[0-9]+$').hasMatch(valor)) {
+              return 'Use apenas números (com DDD).';
+            }
+            return null;
+          },
         ),
       );
 }
