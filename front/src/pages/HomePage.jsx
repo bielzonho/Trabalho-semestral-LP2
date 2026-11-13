@@ -137,25 +137,19 @@ export default function HomePage() {
       return;
     }
 
-    const cesta = cestas.find(c => c.id === cestaId);
-    const qtdCesta = Number(quantidade) || 1;
-    let valorTotal = Number(cesta?.preco || cesta?.precoBase || 0) * qtdCesta;
-    itensPedido.forEach(it => { valorTotal += it.quantidade * it.precoUnitario; });
-
     const payload = {
       clienteNome: nomeCliente.trim(),
       clienteTelefone: telefone.trim(),
       enderecoEntrega: endereco.trim(),
       cestaId: cestaId || null,
-      quantidade: qtdCesta,
+      quantidade: Number(quantidade),
       observacoes: observacao.trim(),
-      valorTotal: Number(valorTotal.toFixed(2)),
-      itens: itensPedido.map(({ produtoId, quantidade, precoUnitario }) => ({ produtoId, quantidade, precoUnitario })),
+      itens: itensPedido.map(({ produtoId, quantidade }) => ({ produtoId, quantidade })),
     };
 
     setEnviando(true);
     try {
-      await criarPedido(payload);
+      const pedidoCriado = await criarPedido(payload);
       setNomeCliente(usuario?.nome || '');
       setTelefone('');
       setEndereco('');
@@ -163,7 +157,7 @@ export default function HomePage() {
       setQuantidade(1);
       setObservacao('');
       setItensPedido([]);
-      alert('Pedido enviado com sucesso!');
+      alert(`Pedido enviado com sucesso! Total: ${formatarMoeda(pedidoCriado.valorTotal)}`);
       carregarPedidosUsuario();
     } catch (err) {
       alert(`Não foi possível criar o pedido: ${err.message}`);

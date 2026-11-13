@@ -37,6 +37,8 @@ services:
       - .env
     environment:
       BARRAMENTO_URL: http://barramento-eventos:3015/eventos
+      CATALOGO_CESTAS_API_URL: http://catalogo-cestas:3010/cestas
+      PRODUTOS_API_URL: http://produtos:3012/produtos
     restart: unless-stopped
 
   produtos:
