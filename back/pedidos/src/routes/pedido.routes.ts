@@ -4,6 +4,7 @@ import { supabase } from "../database";
 import { Pedido, PedidoItem, StatusPedido } from "../types/pedido";
 import { requireAuth } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/roles.middleware";
+import { calcularTotalPedido, ErroNovoPedido, validarNovoPedido } from "../services/novo-pedido";
 
 const BARRAMENTO = process.env.BARRAMENTO_URL || "http://localhost:3015/eventos";
 
@@ -227,77 +228,62 @@ router.get("/:id", requireAuth, requireRole("admin"), async (req: Request, res: 
 
 // POST /pedidos — cliente ou admin
 router.post("/", requireAuth, requireRole("cliente"), async (req: Request, res: Response) => {
-  const {
-    cestaId,
-    valorTotal,
-    itens,
-    clienteNome,
-    clienteTelefone,
-    telefone,
-    enderecoEntrega,
-    observacoes,
-    status
-  } = req.body;
+  try {
+    // Validar e consultar preços antes de qualquer escrita no banco.
+    const pedido = validarNovoPedido(req.body);
+    const valorTotal = await calcularTotalPedido(pedido);
 
-  if (!cestaId || valorTotal === undefined) {
-    return res.status(400).json({
-      mensagem: "Campos obrigatórios no novo modelo: cestaId, valorTotal."
-    });
-  }
+    const { data: carrinho, error: carrinhoError } = await supabase
+      .from("carrinhos")
+      .insert({ cesta_id: pedido.cestaId })
+      .select("*")
+      .single();
 
-  const { data: carrinho, error: carrinhoError } = await supabase
-    .from("carrinhos")
-    .insert({ cesta_id: cestaId })
-    .select("*")
-    .single();
+    if (carrinhoError) return handleSupabaseError(res, carrinhoError);
 
-  if (carrinhoError) return handleSupabaseError(res, carrinhoError);
+    if (pedido.itens.length > 0) {
+      const itensPayload = pedido.itens.map((item) => ({
+        carrinho_id: carrinho.id,
+        item_id: item.produtoId,
+        quantidade: item.quantidade
+      }));
 
-  if (itens && itens.length > 0) {
-    const itensPayload = itens.map((item: Omit<PedidoItem, "id" | "pedidoId" | "criadoEm">) => ({
-      carrinho_id: carrinho.id,
-      item_id: item.produtoId,
-      quantidade: item.quantidade || 1
-    }));
+      const { error: itensError } = await supabase
+        .from("carrinho_itens_adicionais")
+        .insert(itensPayload);
 
-    const { error: itensError } = await supabase
-      .from("carrinho_itens_adicionais")
-      .insert(itensPayload);
-
-    if (itensError) return handleSupabaseError(res, itensError);
-  }
-
-  const { data: venda, error: vendaError } = await supabase
-    .from("vendas_cestas")
-    .insert({
-      cesta_id: cestaId,
-      carrinho_id: carrinho.id,
-      cliente_nome: clienteNome || req.usuario?.nome || "Cliente",
-      email_cliente: req.usuario?.email || null,
-      cliente_telefone: clienteTelefone || telefone || null,
-      endereco_entrega: enderecoEntrega || null,
-      observacoes: observacoes || null,
-      status: status || "pendente",
-      preco_pago: valorTotal,
-      pago: status === "confirmado" || status === "entregue"
-    })
-    .select("*")
-    .single();
-
-  if (vendaError) return handleSupabaseError(res, vendaError);
-
-  const itensCarrinho = await buscarItensDoCarrinho(String(carrinho.id));
-
-  // Emite evento se pedido já nasce como confirmado/entregue
-  if (deveEmitirEvento(null, (status || "pendente") as StatusPedido)) {
-    try {
-      await emitirEventoPedidoEfetivado(String(venda.id), String(carrinho.id), status as StatusPedido);
-    } catch (err) {
-      console.error("[Pedidos] Aviso: barramento indisponível no POST. Evento não emitido:", (err as Error).message);
+      if (itensError) return handleSupabaseError(res, itensError);
     }
-  }
 
-  return res.status(201).json(mapPedido(venda as VendaCestaRow, itensCarrinho));
+    const { data: venda, error: vendaError } = await supabase
+      .from("vendas_cestas")
+      .insert({
+        cesta_id: pedido.cestaId,
+        carrinho_id: carrinho.id,
+        cliente_nome: pedido.clienteNome || req.usuario?.nome || "Cliente",
+        email_cliente: req.usuario?.email || null,
+        cliente_telefone: pedido.clienteTelefone || null,
+        endereco_entrega: pedido.enderecoEntrega || null,
+        observacoes: pedido.observacoes || null,
+        status: "pendente",
+        preco_pago: valorTotal,
+        pago: false
+      })
+      .select("*")
+      .single();
+
+    if (vendaError) return handleSupabaseError(res, vendaError);
+
+    const itensCarrinho = await buscarItensDoCarrinho(String(carrinho.id));
+
+    return res.status(201).json(mapPedido(venda as VendaCestaRow, itensCarrinho));
+  } catch (err) {
+    if (err instanceof ErroNovoPedido) {
+      return res.status(err.status).json({ mensagem: err.message });
+    }
+    console.error("[Pedidos] Erro ao criar pedido:", err);
+    return res.status(500).json({ mensagem: "Erro interno ao criar pedido." });
+  }
 });
 
 // PUT /pedidos/:id — somente admin

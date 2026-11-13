@@ -73,7 +73,6 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
       final pedido = await widget.pedidos.criar(
         token: widget.sessao.token!,
         cestaId: carrinho.cesta!.id,
-        valorTotal: double.parse(carrinho.valorTotal.toStringAsFixed(2)),
         itens: carrinho.itens,
         clienteNome: _nome.text.trim(),
         telefone: _telefone.text.trim(),
@@ -88,6 +87,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
           title: const Text('Pedido realizado!'),
           content: Text('Pedido nº ${pedido.id} registrado. '
+              'Total: ${formatarPreco(pedido.valorTotal)}. '
               'Acompanhe o status em "Meus pedidos".'),
           actions: [
             FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),

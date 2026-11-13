@@ -19,7 +19,6 @@ class PedidosService {
   Future<Pedido> criar({
     required String token,
     required String cestaId,
-    required double valorTotal,
     required List<PedidoItem> itens,
     required String clienteNome,
     required String telefone,
@@ -30,7 +29,6 @@ class PedidosService {
       _base,
       {
         'cestaId': cestaId,
-        'valorTotal': valorTotal,
         'itens': itens.map((i) => i.toJson()).toList(),
         'clienteNome': clienteNome,
         'clienteTelefone': telefone,

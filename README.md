@@ -422,6 +422,35 @@ front/
 | PATCH | `/pedidos/:id/status` | Admin | Alterar status (decrementa estoque ao confirmar/entregar) |
 | DELETE | `/pedidos/:id` | Admin | Remover pedido |
 
+#### Criação segura de pedidos
+
+`POST /pedidos` exige JWT e recebe a cesta, suas quantidades e os dados de entrega:
+
+```json
+{
+  "cestaId": "1",
+  "quantidade": 1,
+  "itens": [{ "produtoId": "2", "quantidade": 2 }],
+  "clienteNome": "Ana Souza",
+  "clienteTelefone": "11999999999",
+  "enderecoEntrega": "Rua Teste, 1"
+}
+```
+
+`quantidade` de cestas é opcional e vale `1` quando omitida; `itens` é opcional e aceita até 100 linhas. Quantidades devem ser números inteiros positivos. Produtos repetidos são agrupados para validar o saldo total solicitado. A API verifica a existência da cesta e dos produtos, a disponibilidade da cesta e o estoque dos adicionais antes de gravar.
+
+O servidor consulta os preços nos microsserviços de catálogo/produtos e calcula o total em centavos: preço da cesta × quantidade de cestas + preços dos adicionais × suas quantidades. O novo pedido sempre nasce com `status: "pendente"` e `pago: false`. Campos antigos como `valorTotal`, `precoUnitario`, `status` e `pago` enviados na criação são ignorados. O React e o Flutter exibem o total devolvido pelo servidor na confirmação.
+
+No modo local, as consultas usam `http://localhost:3010/cestas` e `http://localhost:3012/produtos`. Para outro endereço, configure `CATALOGO_CESTAS_API_URL` e `PRODUTOS_API_URL` no ambiente do serviço de pedidos. Compose e ConfigMap do Kubernetes já definem os endereços internos. Falhas nessas consultas retornam `503`, sem usar os preços do cliente nem gravar o pedido. Entradas inválidas retornam `400`, recursos ausentes `404` e indisponibilidade/estoque insuficiente `409`.
+
+Teste de regressão (HTTP local com persistência simulada, sem escrever no Supabase):
+
+```bash
+npm test --prefix back/pedidos
+```
+
+Essa verificação de estoque na criação não reserva unidades: reserva concorrente e baixa de estoque pelo barramento são operações separadas.
+
 ### Barramento de Eventos — `http://localhost:3015`
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
