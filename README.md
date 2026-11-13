@@ -1,10 +1,35 @@
-# Trabalho-semestral-LP2
+# Grão & Cesta ☕🧺
 
-Trabalho semestral de Linguagens de Programação 2 e Arquitetura de Sistemas Computacionais: back end em microsserviços Node.js/TypeScript e **Dart**, front end web em **React** e app mobile em **Flutter**, com implantação via **Docker** e **Kubernetes**.
+**O café da manhã especial, do catálogo à sua porta — em poucos toques.**
 
-## Sistema de Cestas e Pedidos — Grão & Cesta
+> Projeto semestral das disciplinas ECM252 – Linguagens de Programação II e ECM516 – Arquitetura de Sistemas Computacionais (Instituto Mauá de Tecnologia): back end em microsserviços Node.js/TypeScript e **Dart**, front end web em **React** e app mobile em **Flutter**, com implantação via **Docker** e **Kubernetes**.
 
-Sistema completo para gerenciar produtos, cestas de café da manhã e pedidos de clientes, com autenticação JWT, verificação de e-mail por OTP e controle de estoque.
+## O que é o Grão & Cesta
+
+O **Grão & Cesta** é uma plataforma de pedidos de **cestas de café da manhã**. Quem quer surpreender alguém — num aniversário, numa data especial ou só para começar bem o dia — escolhe uma cesta pronta, completa com itens avulsos do jeito que preferir e informa onde entregar. Quem vende tem, no mesmo sistema, o controle do catálogo, do estoque e de todos os pedidos.
+
+### Por que usar
+
+**Para quem compra**
+- **Escolha rápida:** cestas prontas com preço claro e um catálogo de produtos avulsos (cafés, pães, bolos, geleias, sucos…) para personalizar.
+- **Pedido sob medida:** monte o pedido juntando a cesta e os itens extras; o app avisa na hora quando um produto está esgotado ou com poucas unidades.
+- **Acompanhamento:** a tela *Meus pedidos* mostra cada pedido e seu status — pendente, confirmado, em preparação, saiu para entrega, entregue.
+- **Conta segura:** cadastro com senha protegida (hash) e confirmação de acesso por **código enviado ao e-mail**.
+- **Onde estiver:** app **Flutter** para celular e versão **web** em React, conversando com o mesmo back end.
+
+**Para quem vende**
+- **Painel administrativo** completo: cadastre, edite e remova produtos e cestas (inclusive os itens de cada cesta).
+- **Gestão de pedidos:** filtre por status, veja detalhes, atualize o andamento, edite ou exclua.
+- **Estoque automático:** quando um pedido é confirmado, um **evento** no barramento atualiza estoque e total de vendas dos produtos — sem planilha, sem retrabalho.
+- **Pronto para crescer:** cada parte do sistema é um microsserviço independente, empacotado em contêineres **Docker** e orquestrado em **Kubernetes**.
+
+### Funcionalidades
+
+| Perfil | O que pode fazer |
+|---|---|
+| Visitante | Ver o catálogo de cestas e produtos, criar conta |
+| Cliente | Entrar com e-mail/senha + código por e-mail, montar e finalizar pedidos, acompanhar *Meus pedidos* |
+| Administrador | Tudo do cliente + gerenciar produtos, cestas (e seus itens) e pedidos (status, edição, exclusão) |
 
 ---
 
@@ -124,10 +149,24 @@ O painel administrativo aparece no menu (☰) quando o usuário logado tem perfi
 
 ### Pré-requisitos
 - [Flutter SDK](https://docs.flutter.dev/get-started/install/windows) estável no PATH (`flutter --version`).
-- Chrome ou Edge para o alvo web. Android SDK e Visual Studio são opcionais.
-- **Back end no ar** (`npm run dev:back`, ou Docker/Kubernetes). Para entrar, use um usuário de desenvolvimento (e-mails e senhas de seed em `back/auth/src/users.ts`) ou uma conta criada pelo React.
+- **Android:** Android Studio (Android SDK + um emulador) ou um celular com depuração USB. **Web:** Chrome ou Edge.
+- **Back end no ar** (`npm run dev:back` **e** `npm run dev:verificacao-dart` para o código de login, ou Docker/Kubernetes). Para entrar, use um usuário de desenvolvimento (e-mails e senhas de seed em `back/auth/src/users.ts`) ou uma conta criada pelo app.
 
-### Executar
+### Executar no Android
+
+```bash
+cd mobile
+flutter pub get
+flutter devices                 # lista o emulador/celular conectado
+flutter run -d <id-do-dispositivo>
+flutter build apk               # gera o APK em build/app/outputs/flutter-apk/
+```
+
+- **Emulador:** o app já usa `10.0.2.2`, que é o "localhost" do PC visto de dentro do emulador.
+- **Celular físico:** o celular precisa estar na mesma rede do PC; informe o IP do PC: `flutter run --dart-define=API_HOST=192.168.0.10`.
+- O app tem permissão de internet e acesso HTTP liberado (`android/app/src/main/AndroidManifest.xml`), pois os microsserviços rodam em `http://`.
+
+### Executar na web
 
 ```bash
 cd mobile
@@ -137,7 +176,7 @@ flutter run -d edge --web-port=5500      # ou: -d chrome
 
 > **Use sempre `--web-port=5500`.** O Flutter web sobe numa porta aleatória e o back end só libera por CORS as origens `localhost:5500`, `5173` e `3000`; em outra porta o navegador bloqueia as chamadas e o catálogo mostra "Não foi possível conectar ao servidor".
 
-O host do back end pode ser trocado com `--dart-define=API_HOST=<ip>` (padrão `localhost`).
+O host do back end pode ser trocado em qualquer plataforma com `--dart-define=API_HOST=<ip>` (padrão: `localhost` na web/desktop e `10.0.2.2` no emulador Android).
 
 ### Testes
 
@@ -160,7 +199,7 @@ dart run tool/smoke.dart cliente@email.com <senha-de-dev>
 ```
 mobile/lib/
 ├── main.dart                   # MaterialApp, injeta repositório e sessão
-├── config/api_config.dart      # URLs dos serviços (API_HOST)
+├── config/                     # api_config (URLs, API_HOST) e host padrão por plataforma (10.0.2.2 no emulador)
 ├── services/                   # ApiClient (GET/POST/PUT/PATCH/DELETE), catálogo, auth, cadastro,
 │                               # verificação OTP (Dart), pedidos, admin do catálogo, token_storage
 ├── state/                      # sessao_controller (login/OTP/logout), carrinho_controller (pedido em montagem)
@@ -170,6 +209,8 @@ mobile/lib/
 ├── widgets/                    # CestaCard, ProdutoCard, PedidoTile/StatusChip, estado_tela, SecaoTitulo
 └── data/mock_dados.dart        # dados de exemplo usados só nos testes
 mobile/tool/smoke.dart          # teste de integração com o back end
+mobile/android/                 # plataforma Android (permissão de internet e HTTP liberado)
+mobile/web/, mobile/windows/    # plataformas web e desktop
 ```
 
 ---
@@ -236,7 +277,8 @@ Os manifests ficam em `k8s/` (ConfigMap, Secret e, por microsserviço, um Deploy
 # 1. Build das imagens (os manifests usam imagePullPolicy: Never)
 docker compose build
 
-# 2. Criar k8s/secret.yaml (NÃO é versionado) a partir do .env — modelo abaixo
+# 2. Criar o Secret a partir do modelo e preencher com os valores do .env
+cp k8s/exemplos/secret.example.yaml k8s/secret.yaml
 
 # 3. Aplicar tudo
 kubectl apply -f k8s/
@@ -246,24 +288,7 @@ kubectl get pods        # todos devem ficar Running
 kubectl get services
 ```
 
-Modelo do `k8s/secret.yaml` (está no `.gitignore`; use os mesmos valores do `.env`):
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: lp2-secret
-type: Opaque
-stringData:
-  DB_URL: "https://<projeto>.supabase.co"
-  SUPABASE_SERVICE_ROLE_KEY: "<chave>"
-  JWT_SECRET: "<segredo>"
-  SMTP_HOST: "smtp.gmail.com"
-  SMTP_PORT: "587"
-  SMTP_USER: ""
-  SMTP_PASS: ""
-  EMAIL_FROM: ""
-```
+O modelo está em [`k8s/exemplos/secret.example.yaml`](k8s/exemplos/secret.example.yaml). O `k8s/secret.yaml` preenchido está no `.gitignore` e **nunca** deve ser commitado. O modelo fica numa subpasta porque `kubectl apply -f k8s/` não lê subpastas, então ele não sobrescreve o Secret real.
 
 ### Portas (NodePort)
 
