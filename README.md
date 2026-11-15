@@ -1,5 +1,7 @@
 # Grão & Cesta ☕🧺
 
+## Apresentação: https://youtu.be/0GGAta5EALg
+
 **O café da manhã especial, do catálogo à sua porta — em poucos toques.**
 
 > Projeto semestral das disciplinas ECM252 – Linguagens de Programação II e ECM516 – Arquitetura de Sistemas Computacionais (Instituto Mauá de Tecnologia): back end em microsserviços Node.js/TypeScript e **Dart**, front end web em **React** e app mobile em **Flutter**, com implantação via **Docker** e **Kubernetes**.
